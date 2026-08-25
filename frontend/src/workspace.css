@@ -13,18 +13,18 @@
   --space-128: 128px;
   --space-160: 160px;
 
-  /* Deep Dark Color Palette */
-  --void: #030505;
-  --basalt: #0a0d0d;
-  --graphite: #121616;
-  --smoked-glass: rgba(18, 22, 22, 0.7);
-  --smoked-border: rgba(222, 205, 168, 0.08);
+  /* Deep Earth Color Palette */
+  --void: #070807;
+  --basalt: #101210;
+  --graphite: #171916;
+  --smoked-glass: rgba(32, 32, 27, 0.7);
+  --smoked-border: rgba(181, 150, 88, 0.08);
   
-  --line: rgba(222, 205, 168, 0.12);
-  --text: #eeece5;
-  --muted: #8b938d;
-  --gold: #d2b172;
-  --gold-glow: #e8ca8a;
+  --line: rgba(181, 150, 88, 0.12);
+  --text: #F1EFE8;
+  --muted: #8B8B80;
+  --gold: #B59658;
+  --gold-glow: #D0B77C;
 }
 
 * { box-sizing: border-box; }
@@ -89,10 +89,11 @@ button, a { font: inherit; cursor: pointer; }
 
 .hero-image {
   position: absolute; inset: 0;
-  background: linear-gradient(90deg, var(--void) 0%, rgba(3,5,5,.9) 20%, rgba(3,5,5,.3) 60%, rgba(3,5,5,.0) 100%),
-              linear-gradient(0deg, var(--void) 0%, transparent 40%),
+  background: radial-gradient(circle at 70% 50%, transparent 20%, var(--void) 80%),
               url('/assets/terrain-hero.png') center/cover;
-  filter: saturate(0.6) brightness(0.8);
+  filter: saturate(0.6) brightness(0.6) sepia(0.2);
+  mix-blend-mode: luminosity;
+  opacity: 0.5;
   transition: transform 0.2s ease-out; /* Parallax smooth */
 }
 
@@ -161,7 +162,7 @@ button, a { font: inherit; cursor: pointer; }
   display: flex; flex-direction: column; gap: 0; margin-top: var(--space-96); position: relative;
 }
 .landing-stages::before {
-  content:''; position: absolute; left: 50px; top: 0; bottom: 0; width: 1px; background: var(--smoked-border);
+  content:''; position: absolute; left: 50px; top: 0; bottom: 0; width: 1px; background: linear-gradient(to bottom, transparent, var(--gold), transparent); opacity: 0.3;
 }
 
 .landing-stages > div {
