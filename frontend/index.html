@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#071013" />
+    <meta name="description" content="Topographic intelligence from a single image." />
+    <title>DepthWizard — One image. A navigable world.</title>
+  </head>
+  <body>
+    <div id="root">
+      <header class="site-header container">
+        <a class="brand" href="#top" aria-label="TerraSight home"><span class="brand-mark">T</span><span>TERRASIGHT</span></a>
+        <button class="menu-toggle" aria-expanded="false" aria-controls="site-nav"><span></span><span></span></button>
+        <nav id="site-nav" class="site-nav" aria-label="Primary navigation">
+          <a href="#platform">Platform</a><a href="#workflow">Workflow</a><a href="#applications">Applications</a><a href="#about">About</a>
+          <a class="nav-cta" href="#contact">Launch workspace <span>↗</span></a>
+        </nav>
+      </header>
+
+      <main id="top">
+        <section class="hero">
+          <div class="hero-art" role="img" aria-label="Gold-lit mountainous terrain viewed from above"></div>
+          <div class="hero-shade"></div>
+          <div class="container hero-content">
+            <p class="eyebrow"><span></span> Remote sensing × AI × 3D</p>
+            <h1>From pixels<br />to <em>terrain.</em></h1>
+            <p class="hero-copy">Transform a single optical image into an interactive, measurable three-dimensional representation of the Earth’s surface.</p>
+            <div class="hero-actions"><a class="button button-gold" href="#workflow">Explore reconstruction <span>→</span></a><a class="button button-ghost" href="#platform">See how it works</a></div>
+            <div class="status-row" aria-label="System status"><div><i class="icon layers"></i><span><b>AI depth engine</b><small><i></i> Ready</small></span></div><div><i class="icon globe"></i><span><b>Scientific visualization</b><small><i></i> Online</small></span></div></div>
+          </div>
+          <aside class="scene-panel" aria-label="Live terrain scene metrics"><p><i></i> Live scene</p><dl><div><dt>Latitude</dt><dd>19.0760° N</dd></div><div><dt>Longitude</dt><dd>72.8777° E</dd></div><div><dt>Elevation</dt><dd>124.7 m</dd></div><div><dt>Slope</dt><dd>8.2°</dd></div><div><dt>Resolution</dt><dd>0.8 m / px</dd></div></dl></aside>
+          <a class="scroll-cue" href="#workflow"><span>↓</span> Scroll to explore</a>
+        </section>
+
+        <section id="workflow" class="workflow section container">
+          <div class="section-heading"><div><p class="eyebrow"><span></span> The transformation</p><h2>A photograph is flat.<br /><em>The terrain isn’t.</em></h2></div><p>TerraSight perceives depth, calibrates scale and reconstructs reality in three dimensions.</p></div>
+          <div class="process-grid">
+            <article class="process-card image-card"><div class="step">01</div><p class="card-label">Image</p><div class="image-thumb aerial"></div><div class="card-copy"><i class="icon frame"></i><div><h3>Optical imagery</h3><p>Single-view satellite or aerial photograph.</p></div></div><div class="progress"><span></span></div></article>
+            <article class="process-card"><div class="step">02</div><p class="card-label">Depth</p><div class="image-thumb depth"></div><div class="card-copy"><i class="icon layers"></i><div><h3>AI depth estimation</h3><p>Monocular depth inference reveals relative structure.</p></div></div><div class="progress"><span></span></div></article>
+            <article class="process-card"><div class="step">03</div><p class="card-label">Elevation</p><div class="image-thumb elevation"></div><div class="card-copy"><i class="icon peak"></i><div><h3>Metric elevation</h3><p>Geospatial calibration converts depth to real-world scale.</p></div></div><div class="progress"><span></span></div></article>
+            <article class="process-card"><div class="step">04</div><p class="card-label">Terrain</p><div class="image-thumb terrain"></div><div class="card-copy"><i class="icon terrain-icon"></i><div><h3>3D reconstruction</h3><p>High-fidelity terrain ready for exploration and analysis.</p></div></div><div class="progress"><span></span></div></article>
+          </div>
+        </section>
+
+        <section id="platform" class="precision section"><div class="container precision-grid"><div><p class="eyebrow"><span></span> Scientific precision</p><h2>From relative depth<br />to <em>measurable terrain.</em></h2><p class="precision-copy">We combine AI perception with geospatial references to produce accurate, trustworthy elevation models.</p><div class="terrain-mini"></div></div><div class="instrument-panel"><p><i></i> Instrument panel</p><div class="metric-grid"><div><i class="icon peak"></i><span>Min elevation<b>42.3<small>m</small></b></span></div><div><i class="icon target"></i><span>Max elevation<b>187.6<small>m</small></b></span></div><div><i class="icon waves"></i><span>Total relief<b>145.3<small>m</small></b></span></div><div><i class="icon shield"></i><span>Confidence<b>91.7<small>%</small></b></span></div></div><div class="data-strip"><span>Latitude <b>19.0760° N</b></span><span>Longitude <b>72.8777° E</b></span><span>Ground sample distance <b>0.8 m / px</b></span></div></div></div></section>
+      </main>
+      <footer id="about" class="container"><span>© 2026 TerraSight</span><a id="contact" href="mailto:hello@terrasight.ai">hello@terrasight.ai</a><span>Earth, measured differently.</span></footer>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
