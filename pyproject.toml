@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "depthwizard-core"
+version = "0.1.0"
+description = "Core single-view terrain reconstruction processing pipeline"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy>=1.24,<2.0",
+  "pillow>=10.0",
+  "rasterio>=1.3",
+  "trimesh>=4.0",
+  "pyyaml>=6.0",
+  "torch>=2.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]

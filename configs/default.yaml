@@ -1,0 +1,13 @@
+model:
+  name: depth_anything
+  input_size: [518, 518]
+  tile_size: 512
+  overlap: 0.25
+calibration:
+  method: huber_scale_shift
+  huber_delta: 1.345
+mesh:
+  vertical_exaggeration: 1.0
+  lod_factor: 1
+outputs:
+  nodata: -9999.0
