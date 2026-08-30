@@ -1,7 +1,7 @@
 """Build a GLB terrain mesh from a NumPy DSM."""
 
 import argparse
-import sys
+import sysA
 from pathlib import Path
 
 import numpy as np
