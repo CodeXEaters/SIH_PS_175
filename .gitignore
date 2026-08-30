@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Large or generated project artifacts
+data/raw/*
+data/processed/*
+models/checkpoints/*
+models/pretrained/*
+output/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!models/checkpoints/.gitkeep
+!models/pretrained/.gitkeep
+!output/demo/.gitkeep
+!output/metrics/.gitkeep
+!output/preview/.gitkeep
