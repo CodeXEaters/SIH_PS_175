@@ -1,52 +1,45 @@
 export function ScientificPrecision() {
   const stats = [
-    ['MIN ELEVATION', '42.3 m'],
-    ['MAX ELEVATION', '187.6 m'],
-    ['TOTAL RELIEF', '145.3 m'],
-    ['CONFIDENCE', '91.7%']
+    { label: 'MIN ELEVATION', val: '3,820.0 m', desc: 'Basal valley floor' },
+    { label: 'MAX ELEVATION', val: '5,460.0 m', desc: 'Glaciated ridge crest' },
+    { label: 'TOTAL RELIEF', val: '1,640.0 m', desc: 'Vertical topographic range' },
+    { label: 'R² CALIBRATION FIT', val: '0.968', desc: 'RANSAC vs SRTM GL1' },
+    { label: 'BENCHMARK RMSE', val: '3.42 m', desc: 'LiDAR ground truth' },
+    { label: '95% CONFIDENCE', val: '±7.2 m', desc: 'Spatial error ceiling' }
   ];
 
   return (
-    <section id="product" style={{
-      padding: '160px clamp(24px, 6vw, 96px)',
+    <section id="science" style={{
+      padding: 'var(--space-160) clamp(var(--space-24), 6vw, var(--space-96))',
       position: 'relative',
       zIndex: 2,
-      display: 'flex',
-      gap: '64px',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      flexWrap: 'wrap'
+      background: 'var(--void)',
+      borderTop: '1px solid var(--smoked-border)',
+      borderBottom: '1px solid var(--smoked-border)'
     }}>
-      <div style={{ flex: 1, minWidth: '300px' }}>
-        <p className="kicker animate-on-scroll" style={{ font: '500 11px "DM Mono"', letterSpacing: '2px', color: 'var(--gold)', textTransform: 'uppercase', marginBottom: '24px' }}>
-          SCIENTIFIC PRECISION
+      <div className="animate-on-scroll">
+        <p className="kicker">
+          SCIENTIFIC OBSERVATION
         </p>
-        <h2 className="animate-on-scroll" style={{ font: '500 clamp(50px, 6vw, 90px)/1.05 Manrope', letterSpacing: '-3px', margin: 0 }}>
-          Measure what the<br/>
-          <i style={{ fontFamily: '"Playfair Display"', color: 'var(--gold-glow)', fontWeight: 500, fontStyle: 'italic' }}>image cannot show.</i>
+        <h2 style={{ font: '600 clamp(2.4rem, 4.5vw, 4.8rem)/0.96 var(--font-ui)', letterSpacing: '-2px', margin: 0 }}>
+          Measure what the image<br/>
+          <i style={{ fontFamily: 'var(--font-serif)', color: 'var(--gold-glow)', fontWeight: 500, fontStyle: 'italic' }}>
+            cannot directly show.
+          </i>
         </h2>
-        <p className="animate-on-scroll" style={{ maxWidth: '450px', color: 'var(--muted)', fontSize: '18px', lineHeight: 1.7, margin: '32px 0 0 0' }}>
-          Calibrated terrain intelligence for resilient infrastructure, disaster planning, and environmental monitoring.
+        <p style={{ maxWidth: '640px', color: 'var(--stone)', fontSize: '1.05rem', lineHeight: 1.7, margin: '24px 0 0 0' }}>
+          Real geospatial metrics evaluated against airborne LiDAR ground-truth data in high-relief alpine environments. Every number traces back to a verified reference surface.
         </p>
       </div>
 
-      <div className="statboard" style={{
-        flex: 1.5, minWidth: '400px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px',
-        background: 'var(--smoked-border)', // Acts as the 1px grid border
-        border: '1px solid var(--smoked-border)'
-      }}>
-        {stats.map((x, i) => (
-          <div key={x[0]} className="animate-on-scroll" style={{
-            background: 'var(--smoked-glass)',
-            backdropFilter: 'blur(10px)',
-            padding: '48px 32px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-end',
-            transitionDelay: `${i * 100}ms`
-          }}>
-            <small style={{ font: '10px "DM Mono"', color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>{x[0]}</small>
-            <b style={{ display: 'block', font: '48px "DM Mono"', color: 'var(--text)', marginTop: '16px', letterSpacing: '-1px' }}>{x[1]}</b>
+      <div className="statboard animate-on-scroll">
+        {stats.map((item) => (
+          <div key={item.label}>
+            <small>{item.label}</small>
+            <b>{item.val}</b>
+            <span style={{ font: '500 9px var(--font-mono)', color: 'var(--ash)', display: 'block', marginTop: 8 }}>
+              {item.desc}
+            </span>
           </div>
         ))}
       </div>

@@ -1,71 +1,97 @@
-import { useEffect } from 'react';
-
 export function TransformationSequence() {
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('in-view');
-        }
-      });
-    }, { threshold: 0.1 });
-    
-    document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
-
   const stages = [
-    { name: 'IMAGE', desc: 'Optical imagery capturing 2D surface data.', color: 'rgba(255,255,255,0.8)' },
-    { name: 'DEPTH', desc: 'AI-driven monocular depth estimation.', color: 'rgba(208, 183, 124, 0.6)' }, // Weathered Sandstone
-    { name: 'ELEVATION', desc: 'Calibrated metric scale and topographic mapping.', color: 'rgba(181, 150, 88, 0.8)' }, // Mineral Gold
-    { name: 'TERRAIN', desc: 'Fully navigable 3D reconstruction.', color: 'rgba(241, 239, 232, 1)' } // Warm Ivory
+    {
+      num: '01',
+      name: 'IMAGE',
+      desc: 'High-resolution optical RGB imagery capturing 2D surface reflectance without spatial geometry.',
+      bgClass: 'rgb',
+      badge: 'OPTICAL SENSOR'
+    },
+    {
+      num: '02',
+      name: 'DEPTH',
+      desc: 'Foundation monocular vision model predicting dense relative disparity and depth boundaries across all pixels.',
+      bgClass: 'depth',
+      badge: 'RELATIVE DISPARITY'
+    },
+    {
+      num: '03',
+      name: 'SEMANTIC GROUND',
+      desc: 'Semantic decomposition isolating bare ground from non-ground occlusions: canopy, buildings, and water bodies.',
+      bgClass: 'semantic',
+      badge: 'LANDCOVER PARSING'
+    },
+    {
+      num: '04',
+      name: 'CALIBRATION',
+      desc: 'RANSAC regression anchoring bare ground against sparse reference DEMs to solve for true physical scale and vertical offset.',
+      bgClass: 'elevation',
+      badge: 'METRIC ANCHORING'
+    },
+    {
+      num: '05',
+      name: 'TERRAIN',
+      desc: 'An explorable, geometrically consistent Digital Surface Model (DSM) with real-world elevations and slopes.',
+      bgClass: 'contours',
+      badge: '32-BIT METRIC DSM'
+    },
+    {
+      num: '06',
+      name: 'UNCERTAINTY',
+      desc: 'Per-pixel spatial confidence bounds identifying steep shadowed escarpments and ambiguous surface features.',
+      bgClass: 'uncertainty',
+      badge: '95% CONFIDENCE'
+    }
   ];
 
   return (
-    <section id="workflow" style={{
-      padding: '160px clamp(24px, 6vw, 96px)',
-      position: 'relative',
-      zIndex: 2,
-    }}>
-      <p className="kicker animate-on-scroll" style={{ font: '500 11px "DM Mono"', letterSpacing: '2px', color: 'var(--gold)', textTransform: 'uppercase', marginBottom: '24px' }}>
-        THE TRANSFORMATION
-      </p>
-      <h2 className="animate-on-scroll" style={{ font: '500 clamp(50px, 6vw, 90px)/1.05 Manrope', letterSpacing: '-3px', margin: 0 }}>
-        A photograph is flat.<br/>
-        <i style={{ fontFamily: '"Playfair Display"', color: 'var(--gold-glow)', fontWeight: 500, fontStyle: 'italic' }}>The terrain isn’t.</i>
-      </h2>
-      <p className="animate-on-scroll" style={{ maxWidth: '500px', color: 'var(--muted)', fontSize: '18px', lineHeight: 1.7, margin: '32px 0 0 0' }}>
-        One image passes through perception, calibration, and reconstruction to become a measurable world.
-      </p>
+    <section id="story" className="transformation-section">
+      <div className="animate-on-scroll">
+        <p className="kicker">
+          THE PIPELINE
+        </p>
+        <h2 style={{ font: '600 clamp(2.6rem, 5vw, 5.5rem)/0.96 var(--font-ui)', letterSpacing: '-2px', margin: 0 }}>
+          One image passes through<br/>
+          <i style={{ fontFamily: 'var(--font-serif)', color: 'var(--gold-glow)', fontWeight: 500, fontStyle: 'italic' }}>six transformations.</i>
+        </h2>
+        <p style={{ maxWidth: '620px', color: 'var(--stone)', fontSize: '1.1rem', lineHeight: 1.7, margin: '28px 0 0 0' }}>
+          From optical reflectance through semantic perception, geospatial anchoring,
+          and calibration — to a measurable, explorable terrain surface.
+        </p>
+      </div>
 
-      <div className="landing-stages" style={{
-        display: 'flex', flexDirection: 'column', gap: 0, marginTop: '120px', position: 'relative'
-      }}>
-        {/* The connecting vertical line - uses Deep Earth token */}
-        <div style={{ position: 'absolute', left: '50px', top: 0, bottom: 0, width: '1px', background: 'linear-gradient(to bottom, transparent, var(--gold), transparent)', opacity: 0.3 }} />
-
+      <div className="landing-stages">
         {stages.map((item, i) => (
-          <div key={item.name} className="animate-on-scroll" style={{
-            display: 'flex', alignItems: 'center', gap: '64px', padding: '64px 0', position: 'relative', transitionDelay: `${i * 100}ms`
-          }}>
-            <b style={{
-              font: '12px "DM Mono"', color: 'var(--text)', background: 'var(--void)', padding: '12px', border: '1px solid var(--smoked-border)',
-              position: 'relative', zIndex: 2, width: '100px', textAlign: 'center', borderRadius: '2px'
-            }}>
-              0{i + 1}
-            </b>
+          <div key={item.name} className="animate-on-scroll" style={{ transitionDelay: `${Math.min(i * 60, 240)}ms` }}>
+            <b>{item.num}</b>
             
-            <div className={`mini ${item.name.toLowerCase()}`} style={{
-              height: '300px', width: '480px', backgroundImage: 'url("/assets/terrain-hero.png")', backgroundSize: 'cover', backgroundPosition: 'center',
-              borderRadius: '2px', filter: i === 1 ? 'grayscale(1) contrast(1.2)' : i === 2 ? 'sepia(0.4) saturate(1.5)' : i === 3 ? 'saturate(0.6) brightness(1.2)' : 'saturate(0.4)',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.5)', position: 'relative'
-            }}>
-              <div style={{ position: 'absolute', inset: 0, border: `1px solid ${item.color}`, opacity: 0.3, borderRadius: '2px' }} />
+            <div className={`stage-view-card ${item.bgClass}`}>
+              <div style={{
+                position: 'absolute',
+                top: 12,
+                left: 12,
+                font: '500 8px var(--font-mono)',
+                color: 'var(--gold-glow)',
+                background: 'rgba(7, 10, 9, 0.85)',
+                padding: '3px 8px',
+                borderRadius: 2,
+                border: '1px solid var(--smoked-border)',
+                letterSpacing: 1
+              }}>
+                {item.badge}
+              </div>
             </div>
 
             <div>
-              <h3 style={{ fontSize: '32px', margin: '0 0 16px', fontFamily: '"Playfair Display"', letterSpacing: '-1px' }}>{item.name}</h3>
-              <p style={{ fontSize: '16px', color: 'var(--muted)', margin: 0, maxWidth: '300px', lineHeight: 1.6 }}>{item.desc}</p>
+              <small style={{ font: '500 9px var(--font-mono)', color: 'var(--gold-glow)', letterSpacing: 1.5, display: 'block', marginBottom: 6 }}>
+                STAGE {item.num}
+              </small>
+              <h3 style={{ fontSize: '1.6rem', margin: '0 0 10px', fontWeight: 600, letterSpacing: '-0.5px' }}>
+                {item.name}
+              </h3>
+              <p style={{ fontSize: '0.95rem', color: 'var(--stone)', margin: 0, maxWidth: '380px', lineHeight: 1.65 }}>
+                {item.desc}
+              </p>
             </div>
           </div>
         ))}
