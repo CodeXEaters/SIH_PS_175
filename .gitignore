@@ -17,3 +17,5 @@ output/*
 !output/demo/.gitkeep
 !output/metrics/.gitkeep
 !output/preview/.gitkeep
+node_modules/
+dist/
