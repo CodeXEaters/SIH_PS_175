@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import type { Project } from '../../types';
-import { reconstructionService } from '../../services/reconstructionService';
+import { useState } from "react";
+import { assetUrl } from "../../api";
+import { reconstructionService } from "../../services/reconstructionService";
+import type { Project } from "../../types";
 
 interface ExportModalProps {
   project: Project;
@@ -9,7 +10,17 @@ interface ExportModalProps {
 
 // Coherent Lucide-style stroke icons
 const IconMesh = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.75"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <polygon points="12 2 2 7 12 12 22 7 12 2" />
     <polyline points="2 17 12 22 22 17" />
     <polyline points="2 12 12 17 22 12" />
@@ -17,7 +28,17 @@ const IconMesh = () => (
 );
 
 const IconPointCloud = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.75"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <circle cx="4" cy="4" r="1.5" />
     <circle cx="12" cy="4" r="1.5" />
     <circle cx="20" cy="4" r="1.5" />
@@ -31,14 +52,34 @@ const IconPointCloud = () => (
 );
 
 const IconGeoJson = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.75"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z" />
     <circle cx="12" cy="10" r="3" />
   </svg>
 );
 
 const IconMetadata = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.75"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
     <polyline points="14 2 14 8 20 8" />
     <line x1="16" y1="13" x2="8" y2="13" />
@@ -48,7 +89,17 @@ const IconMetadata = () => (
 );
 
 const IconAudit = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.75"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
     <polyline points="14 2 14 8 20 8" />
     <path d="M9 15l2 2 4-4" />
@@ -56,12 +107,18 @@ const IconAudit = () => (
 );
 
 export function ExportModal({ project, onClose }: ExportModalProps) {
-  const [downloadingFormat, setDownloadingFormat] = useState<string | null>(null);
+  const [downloadingFormat, setDownloadingFormat] = useState<string | null>(
+    null,
+  );
 
-  const downloadFile = (filename: string, content: string, mimeType: string) => {
+  const downloadFile = (
+    filename: string,
+    content: string,
+    mimeType: string,
+  ) => {
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = filename;
     document.body.appendChild(a);
@@ -71,40 +128,41 @@ export function ExportModal({ project, onClose }: ExportModalProps) {
   };
 
   const handleExportObj = () => {
-    setDownloadingFormat('OBJ');
-    const content = reconstructionService.generateObjFile(project.name);
-    downloadFile(`${project.name.toLowerCase()}_mesh.obj`, content, 'text/plain');
+    setDownloadingFormat("OBJ");
+    const url = assetUrl(project.visualization?.mesh);
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
     setTimeout(() => setDownloadingFormat(null), 600);
   };
 
   const handleExportXyz = () => {
-    setDownloadingFormat('XYZ');
-    const content = reconstructionService.generateXyzFile(project.name);
-    downloadFile(`${project.name.toLowerCase()}_pointcloud.xyz`, content, 'text/plain');
+    setDownloadingFormat("XYZ");
+    setDownloadingFormat(null);
     setTimeout(() => setDownloadingFormat(null), 600);
   };
 
   const handleExportGeoJson = () => {
-    setDownloadingFormat('GEOJSON');
+    setDownloadingFormat("GEOJSON");
     const content = reconstructionService.generateGeoJson(project);
-    downloadFile(`${project.name.toLowerCase()}_survey_markers.geojson`, content, 'application/geo+json');
+    downloadFile(
+      `${project.name.toLowerCase()}_survey_markers.geojson`,
+      content,
+      "application/geo+json",
+    );
     setTimeout(() => setDownloadingFormat(null), 600);
   };
 
   const handleExportMetadata = () => {
-    setDownloadingFormat('JSON');
-    const meta = {
-      project: project.name,
-      reconstructionMode: project.reconstructionMode,
-      spatialReference: project.location.crs,
-      groundSamplingDistanceMeters: project.location.gsd,
-      calibration: project.calibration,
-      validation: project.validation,
-      semanticCoverage: project.semanticStats,
-      generatedAt: new Date().toISOString(),
-      generator: 'BHUDARPAN Single-View Height Estimation Engine v2.4'
-    };
-    downloadFile(`${project.name.toLowerCase()}_metadata.json`, JSON.stringify(meta, null, 2), 'application/json');
+    setDownloadingFormat("JSON");
+    const meta = project.dsmMetadata;
+    if (!meta) {
+      setDownloadingFormat(null);
+      return;
+    }
+    downloadFile(
+      `${project.name.toLowerCase()}_metadata.json`,
+      JSON.stringify(meta, null, 2),
+      "application/json",
+    );
     setTimeout(() => setDownloadingFormat(null), 600);
   };
 
@@ -128,7 +186,7 @@ export function ExportModal({ project, onClose }: ExportModalProps) {
       <body>
         <h1>BHUDARPAN GEOSPATIAL VALIDATION AUDIT</h1>
         <p><strong>Project:</strong> ${project.name} | <strong>Mode:</strong> ${project.reconstructionMode.toUpperCase()} DSM</p>
-        <p><strong>CRS:</strong> ${project.location.crs} | <strong>GSD:</strong> ${project.location.gsd || 'N/A'} m/pixel</p>
+        <p><strong>CRS:</strong> ${project.location.crs} | <strong>GSD:</strong> ${project.location.gsd || "N/A"} m/pixel</p>
         
         <h2>1. Calibration Residuals &amp; Alignment</h2>
         <table>
@@ -165,7 +223,7 @@ export function ExportModal({ project, onClose }: ExportModalProps) {
       </body>
       </html>
     `;
-    const win = window.open('', '_blank');
+    const win = window.open("", "_blank");
     if (win) {
       win.document.write(reportHtml);
       win.document.close();
@@ -174,18 +232,34 @@ export function ExportModal({ project, onClose }: ExportModalProps) {
   };
 
   return (
-    <div className="modal-backdrop animate-fade-in" onClick={onClose} role="dialog" aria-modal="true" aria-label="Export deliverables">
-      <div className="export-modal animate-scale-up" onClick={e => e.stopPropagation()}>
+    <div
+      className="modal-backdrop animate-fade-in"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Export deliverables"
+    >
+      <div
+        className="export-modal animate-scale-up"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-head">
           <div>
             <small>DATA PRODUCT EXPORT</small>
             <h2>Export Reconstruction Assets</h2>
           </div>
-          <button className="close-btn" onClick={onClose} aria-label="Close modal">✕</button>
+          <button
+            className="close-btn"
+            onClick={onClose}
+            aria-label="Close modal"
+          >
+            ✕
+          </button>
         </div>
 
         <p className="modal-desc">
-          Generate production-ready geospatial deliverables, 3D meshes, point clouds, survey markers, or an official scientific audit report.
+          Generate production-ready geospatial deliverables, 3D meshes, point
+          clouds, survey markers, or an official scientific audit report.
         </p>
 
         {/* Clean Row List (No Card Clutter) */}
@@ -198,11 +272,14 @@ export function ExportModal({ project, onClose }: ExportModalProps) {
               </div>
               <div className="export-row-info">
                 <strong>3D Surface Mesh (.OBJ)</strong>
-                <p>Triangulated surface mesh with UV coordinates for CAD and 3D GIS.</p>
+                <p>
+                  Triangulated surface mesh with UV coordinates for CAD and 3D
+                  GIS.
+                </p>
               </div>
             </div>
             <button className="export-row-btn" onClick={handleExportObj}>
-              {downloadingFormat === 'OBJ' ? 'Exporting…' : 'Download'}
+              {downloadingFormat === "OBJ" ? "Exporting…" : "Download"}
             </button>
           </div>
 
@@ -214,11 +291,14 @@ export function ExportModal({ project, onClose }: ExportModalProps) {
               </div>
               <div className="export-row-info">
                 <strong>Dense Point Cloud (.XYZ)</strong>
-                <p>Classified point cloud with spatial coordinates and intensity values.</p>
+                <p>
+                  Classified point cloud with spatial coordinates and intensity
+                  values.
+                </p>
               </div>
             </div>
             <button className="export-row-btn" onClick={handleExportXyz}>
-              {downloadingFormat === 'XYZ' ? 'Exporting…' : 'Download'}
+              {downloadingFormat === "XYZ" ? "Exporting…" : "Download"}
             </button>
           </div>
 
@@ -230,11 +310,14 @@ export function ExportModal({ project, onClose }: ExportModalProps) {
               </div>
               <div className="export-row-info">
                 <strong>Survey Markers &amp; Features (.GeoJSON)</strong>
-                <p>Vector markers and surveyed coordinates in {project.location.crs}.</p>
+                <p>
+                  Vector markers and surveyed coordinates in{" "}
+                  {project.location.crs}.
+                </p>
               </div>
             </div>
             <button className="export-row-btn" onClick={handleExportGeoJson}>
-              {downloadingFormat === 'GEOJSON' ? 'Exporting…' : 'Download'}
+              {downloadingFormat === "GEOJSON" ? "Exporting…" : "Download"}
             </button>
           </div>
 
@@ -246,11 +329,14 @@ export function ExportModal({ project, onClose }: ExportModalProps) {
               </div>
               <div className="export-row-info">
                 <strong>Spatial Metadata (.JSON)</strong>
-                <p>CRS, affine transform parameters, GSD, and calibration coefficients.</p>
+                <p>
+                  CRS, affine transform parameters, GSD, and calibration
+                  coefficients.
+                </p>
               </div>
             </div>
             <button className="export-row-btn" onClick={handleExportMetadata}>
-              {downloadingFormat === 'JSON' ? 'Exporting…' : 'Download'}
+              {downloadingFormat === "JSON" ? "Exporting…" : "Download"}
             </button>
           </div>
 
@@ -262,7 +348,10 @@ export function ExportModal({ project, onClose }: ExportModalProps) {
               </div>
               <div className="export-row-info">
                 <strong>Scientific Validation Audit (.PDF)</strong>
-                <p>Official evaluation report with RMSE, MAE, R², and residual distributions.</p>
+                <p>
+                  Official evaluation report with RMSE, MAE, R², and residual
+                  distributions.
+                </p>
               </div>
             </div>
             <button className="export-row-btn" onClick={handlePrintReport}>
@@ -271,11 +360,30 @@ export function ExportModal({ project, onClose }: ExportModalProps) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--smoked-border)', paddingTop: 16 }}>
-          <small style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--text-faint)', letterSpacing: '0.08em' }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            borderTop: "1px solid var(--smoked-border)",
+            paddingTop: 16,
+          }}
+        >
+          <small
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              color: "var(--text-faint)",
+              letterSpacing: "0.08em",
+            }}
+          >
             ALL ASSETS COMPLY WITH OGC / ASPRS GEOSPATIAL STANDARDS
           </small>
-          <button className="close-btn" style={{ width: 'auto', padding: '0 16px', height: 32 }} onClick={onClose}>
+          <button
+            className="close-btn"
+            style={{ width: "auto", padding: "0 16px", height: 32 }}
+            onClick={onClose}
+          >
             Done
           </button>
         </div>

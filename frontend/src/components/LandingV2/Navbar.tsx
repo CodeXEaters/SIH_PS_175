@@ -20,19 +20,13 @@ export function Navbar({ onLaunchWorkspace }: NavbarProps) {
       aria-label="Main navigation"
     >
       <div className="container">
-        {/* Brand: Quiet & Mature */}
+        {/* Brand */}
         <a href="#top" className="nav-logo" aria-label="Bhudarpan home">
-          <div className="nav-logo-mark" aria-hidden="true">
-            <svg viewBox="0 0 20 20" fill="none" stroke="#58C6D4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="10" cy="10" r="8" strokeOpacity="0.8" />
-              <path d="M4 11c2-2.5 4-2.5 6 0s4 2.5 6 0" strokeOpacity="0.9" />
-              <path d="M5.5 8c1.5-1.5 3-1.5 4.5 0s3 1.5 4.5 0" strokeOpacity="0.6" />
-            </svg>
-          </div>
-          <div className="nav-logo-text">
-            <span className="nav-logo-name">BHUDARPAN</span>
-            <span className="nav-logo-tagline">Seeing a deeper Earth.</span>
-          </div>
+          <img
+            src="/assets/bhudarpan-logo.png"
+            alt="Bhudarpan"
+            className="nav-logo-image"
+          />
         </a>
 
         {/* Center Nav Links */}

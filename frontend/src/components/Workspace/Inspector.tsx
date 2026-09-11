@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import type { Project, Tool, ViewMode } from '../../types';
+import { useState } from "react";
+import type { Project, Tool, ViewMode } from "../../types";
 
 interface InspectorProps {
   project: Project;
@@ -32,44 +32,54 @@ export function Inspector({
   setActiveSemanticClass,
   onOpenCalibration,
   onOpenValidation,
-  onDeleteAnnotation
+  onDeleteAnnotation,
 }: InspectorProps) {
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'ANALYSIS' | 'METADATA'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<
+    "OVERVIEW" | "ANALYSIS" | "METADATA"
+  >("OVERVIEW");
   const [terrainExaggeration, setTerrainExaggeration] = useState(1.0);
-  const [baseLayer, setBaseLayer] = useState('satellite');
-  const [overlayLayer, setOverlayLayer] = useState('mesh');
-  const [colorMap, setColorMap] = useState('elevation');
+  const [baseLayer, setBaseLayer] = useState("satellite");
+  const [overlayLayer, setOverlayLayer] = useState("mesh");
+  const [colorMap, setColorMap] = useState("elevation");
 
-  const isMetric = project.reconstructionMode === 'metric';
+  const isMetric = project.reconstructionMode === "metric";
+  const hasValidation = isMetric && project.validation.available;
   const sem = project.semanticStats;
 
   return (
-    <aside className="inspector animate-slide-left" aria-label="Contextual Project Inspector">
+    <aside
+      className="inspector animate-slide-left"
+      aria-label="Contextual Project Inspector"
+    >
       {/* 1. Header with Scientific Hierarchy */}
       <div className="inspector-head">
         <p className="panel-title">PROJECT INSPECTOR</p>
         <h2>{project.name.toUpperCase()}</h2>
 
         {/* Tab switchers if on Project tool */}
-        {tool === 'PROJECT' && (
-          <div style={{ display: 'flex', gap: 4, marginTop: 12 }} role="tablist">
-            {(['OVERVIEW', 'ANALYSIS', 'METADATA'] as const).map(tab => (
+        {tool === "PROJECT" && (
+          <div
+            style={{ display: "flex", gap: 4, marginTop: 12 }}
+            role="tablist"
+          >
+            {(["OVERVIEW", "ANALYSIS", "METADATA"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 style={{
                   flex: 1,
-                  padding: '6px 0',
-                  background: activeTab === tab ? 'var(--mineral-blue)' : 'transparent',
-                  color: activeTab === tab ? '#F3F7F8' : 'var(--text-muted)',
-                  border: 'none',
+                  padding: "6px 0",
+                  background:
+                    activeTab === tab ? "var(--mineral-blue)" : "transparent",
+                  color: activeTab === tab ? "#F3F7F8" : "var(--text-muted)",
+                  border: "none",
                   borderRadius: 4,
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '9.5px',
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "9.5px",
                   fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  cursor: 'pointer',
-                  transition: 'all 160ms ease'
+                  letterSpacing: "0.08em",
+                  cursor: "pointer",
+                  transition: "all 160ms ease",
                 }}
                 role="tab"
                 aria-selected={activeTab === tab}
@@ -82,11 +92,12 @@ export function Inspector({
       </div>
 
       {/* 2. Relative Mode Warning */}
-      {!isMetric && (tool === 'PROJECT' || tool === 'VALIDATE') && (
+      {!isMetric && (tool === "PROJECT" || tool === "VALIDATE") && (
         <div className="uncalibrated-notice">
           <div className="notice-badge">⚠️ RELATIVE RECONSTRUCTION</div>
           <p>
-            No spatial georeference or GCPs detected. Metric scale cannot be anchored. Elevation is expressed in relative disparity units.
+            No spatial georeference or GCPs detected. Metric scale cannot be
+            anchored. Elevation is expressed in relative disparity units.
           </p>
           <button onClick={onOpenCalibration}>
             + ADD GROUND CONTROL POINTS
@@ -95,29 +106,32 @@ export function Inspector({
       )}
 
       {/* === TAB 1: OVERVIEW (High-Value Validation Metrics) === */}
-      {tool === 'PROJECT' && activeTab === 'OVERVIEW' && (
+      {tool === "PROJECT" && activeTab === "OVERVIEW" && (
         <>
-          {isMetric ? (
+          {hasValidation ? (
             <div className="inspector-section">
               <div className="section-title-row">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <small>VALIDATION METRICS</small>
-                  <span style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', background: 'rgba(88,198,212,0.12)', color: 'var(--terrain-cyan)', padding: '1px 5px', borderRadius: 3 }}>
-                    DEMO DATA
-                  </span>
                 </div>
-                <button className="text-link-btn" onClick={onOpenValidation}>View Full Audit ↗</button>
+                <button className="text-link-btn" onClick={onOpenValidation}>
+                  View Full Audit ↗
+                </button>
               </div>
 
               {/* Compact 2x2 Information Grid */}
               <div className="validation-grid">
                 <div className="val-card">
                   <small>RMSE</small>
-                  <b>{project.validation.rmse} <span className="unit">m</span></b>
+                  <b>
+                    {project.validation.rmse} <span className="unit">m</span>
+                  </b>
                 </div>
                 <div className="val-card">
                   <small>MAE</small>
-                  <b>{project.validation.mae} <span className="unit">m</span></b>
+                  <b>
+                    {project.validation.mae} <span className="unit">m</span>
+                  </b>
                 </div>
                 <div className="val-card">
                   <small>R² COEFF</small>
@@ -125,19 +139,22 @@ export function Inspector({
                 </div>
                 <div className="val-card">
                   <small>95% CONF</small>
-                  <b>&plusmn;{project.validation.percentile95} <span className="unit">m</span></b>
+                  <b>
+                    &plusmn;{project.validation.percentile95}{" "}
+                    <span className="unit">m</span>
+                  </b>
                 </div>
               </div>
             </div>
           ) : (
             <div className="inspector-section">
-              <small className="section-kicker">RELATIVE GEOMETRY METRICS</small>
-              <div className="validation-grid" style={{ marginTop: 10 }}>
-                <div className="val-card"><small>DISPARITY RANGE</small><b>0.0 – 1.0</b></div>
-                <div className="val-card"><small>GRID RESOLUTION</small><b>120×120</b></div>
-                <div className="val-card"><small>SURFACE NORMALS</small><b>Calculated</b></div>
-                <div className="val-card"><small>RELIABILITY</small><b>94.2%</b></div>
-              </div>
+              <small className="section-kicker">
+                RELATIVE GEOMETRY METRICS
+              </small>
+              <p className="empty-hint" style={{ marginTop: 10 }}>
+                Relative reconstruction metrics are unavailable until an input
+                is processed.
+              </p>
             </div>
           )}
 
@@ -157,7 +174,7 @@ export function Inspector({
                 max="2.5"
                 step="0.1"
                 value={terrainExaggeration}
-                onChange={e => setTerrainExaggeration(Number(e.target.value))}
+                onChange={(e) => setTerrainExaggeration(Number(e.target.value))}
                 className="range-input"
               />
             </div>
@@ -168,12 +185,12 @@ export function Inspector({
                 <span>SUN AZIMUTH</span>
                 <b>{sunAzimuth}°</b>
               </div>
-              <input 
-                type="range" 
-                min="0" 
-                max="360" 
-                value={sunAzimuth} 
-                onChange={e => setSunAzimuth(Number(e.target.value))} 
+              <input
+                type="range"
+                min="0"
+                max="360"
+                value={sunAzimuth}
+                onChange={(e) => setSunAzimuth(Number(e.target.value))}
                 className="range-input"
               />
             </div>
@@ -184,12 +201,12 @@ export function Inspector({
                 <span>SUN ELEVATION</span>
                 <b>{sunAltitude}°</b>
               </div>
-              <input 
-                type="range" 
-                min="10" 
-                max="85" 
-                value={sunAltitude} 
-                onChange={e => setSunAltitude(Number(e.target.value))} 
+              <input
+                type="range"
+                min="10"
+                max="85"
+                value={sunAltitude}
+                onChange={(e) => setSunAltitude(Number(e.target.value))}
                 className="range-input"
               />
             </div>
@@ -198,13 +215,38 @@ export function Inspector({
           {/* Layer Controls (Native Selects) */}
           <div className="inspector-section">
             <small className="section-kicker">LAYER SELECTION</small>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Base Layer</span>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                marginTop: 12,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span
+                  style={{ fontSize: "12px", color: "var(--text-secondary)" }}
+                >
+                  Base Layer
+                </span>
                 <select
                   value={baseLayer}
-                  onChange={e => setBaseLayer(e.target.value)}
-                  style={{ background: 'var(--surface-base)', border: '1px solid var(--smoked-border)', color: 'var(--text-primary)', padding: '4px 8px', borderRadius: 4, fontSize: '11px', fontFamily: 'var(--font-mono)' }}
+                  onChange={(e) => setBaseLayer(e.target.value)}
+                  style={{
+                    background: "var(--surface-base)",
+                    border: "1px solid var(--smoked-border)",
+                    color: "var(--text-primary)",
+                    padding: "4px 8px",
+                    borderRadius: 4,
+                    fontSize: "11px",
+                    fontFamily: "var(--font-mono)",
+                  }}
                 >
                   <option value="satellite">Satellite (Natural Color)</option>
                   <option value="grayscale">Grayscale Panchromatic</option>
@@ -212,12 +254,30 @@ export function Inspector({
                 </select>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Overlay</span>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span
+                  style={{ fontSize: "12px", color: "var(--text-secondary)" }}
+                >
+                  Overlay
+                </span>
                 <select
                   value={overlayLayer}
-                  onChange={e => setOverlayLayer(e.target.value)}
-                  style={{ background: 'var(--surface-base)', border: '1px solid var(--smoked-border)', color: 'var(--text-primary)', padding: '4px 8px', borderRadius: 4, fontSize: '11px', fontFamily: 'var(--font-mono)' }}
+                  onChange={(e) => setOverlayLayer(e.target.value)}
+                  style={{
+                    background: "var(--surface-base)",
+                    border: "1px solid var(--smoked-border)",
+                    color: "var(--text-primary)",
+                    padding: "4px 8px",
+                    borderRadius: 4,
+                    fontSize: "11px",
+                    fontFamily: "var(--font-mono)",
+                  }}
                 >
                   <option value="mesh">Terrain Mesh</option>
                   <option value="contours">Contour Isolines</option>
@@ -225,14 +285,34 @@ export function Inspector({
                 </select>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Color Map</span>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span
+                  style={{ fontSize: "12px", color: "var(--text-secondary)" }}
+                >
+                  Color Map
+                </span>
                 <select
                   value={colorMap}
-                  onChange={e => setColorMap(e.target.value)}
-                  style={{ background: 'var(--surface-base)', border: '1px solid var(--smoked-border)', color: 'var(--text-primary)', padding: '4px 8px', borderRadius: 4, fontSize: '11px', fontFamily: 'var(--font-mono)' }}
+                  onChange={(e) => setColorMap(e.target.value)}
+                  style={{
+                    background: "var(--surface-base)",
+                    border: "1px solid var(--smoked-border)",
+                    color: "var(--text-primary)",
+                    padding: "4px 8px",
+                    borderRadius: 4,
+                    fontSize: "11px",
+                    fontFamily: "var(--font-mono)",
+                  }}
                 >
-                  <option value="elevation">Elevation (Cyan → Deep Navy)</option>
+                  <option value="elevation">
+                    Elevation (Cyan → Deep Navy)
+                  </option>
                   <option value="slope">Slope Angle</option>
                   <option value="uncertainty">Confidence Variance</option>
                 </select>
@@ -243,82 +323,218 @@ export function Inspector({
       )}
 
       {/* === TAB 2: ANALYSIS (Confidence & Progress Bars) === */}
-      {tool === 'PROJECT' && activeTab === 'ANALYSIS' && (
+      {tool === "PROJECT" && activeTab === "ANALYSIS" && (
         <div className="inspector-section">
           <small className="section-kicker">CONFIDENCE &amp; INLIER FIT</small>
           <div className="data-bar-group" style={{ marginTop: 14 }}>
-            <div className="bar-labels" style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: '10px', marginBottom: 6 }}>
-              <span style={{ color: 'var(--text-muted)' }}>RANSAC INLIER FIT</span>
-              <span style={{ color: 'var(--terrain-cyan)' }}>{project.calibration.fitQuality}%</span>
+            <div
+              className="bar-labels"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontFamily: "var(--font-mono)",
+                fontSize: "10px",
+                marginBottom: 6,
+              }}
+            >
+              <span style={{ color: "var(--text-muted)" }}>
+                RANSAC INLIER FIT
+              </span>
+              <span style={{ color: "var(--terrain-cyan)" }}>
+                {project.calibration.fitQuality}%
+              </span>
             </div>
-            <div className="bar-track" style={{ height: 4, background: 'rgba(180,200,210,0.1)', borderRadius: 2, overflow: 'hidden' }}>
-              <div className="bar-fill" style={{ width: `${project.calibration.fitQuality}%`, height: '100%', background: 'var(--mineral-blue)' }} />
+            <div
+              className="bar-track"
+              style={{
+                height: 4,
+                background: "rgba(180,200,210,0.1)",
+                borderRadius: 2,
+                overflow: "hidden",
+              }}
+            >
+              <div
+                className="bar-fill"
+                style={{
+                  width: `${project.calibration.fitQuality}%`,
+                  height: "100%",
+                  background: "var(--mineral-blue)",
+                }}
+              />
             </div>
           </div>
 
           <div className="data-bar-group" style={{ marginTop: 18 }}>
-            <div className="bar-labels" style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: '10px', marginBottom: 6 }}>
-              <span style={{ color: 'var(--text-muted)' }}>SPATIAL CONFIDENCE</span>
-              <span style={{ color: 'var(--terrain-cyan)' }}>95% (&plusmn;{project.validation.percentile95}m)</span>
+            <div
+              className="bar-labels"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontFamily: "var(--font-mono)",
+                fontSize: "10px",
+                marginBottom: 6,
+              }}
+            >
+              <span style={{ color: "var(--text-muted)" }}>
+                SPATIAL CONFIDENCE
+              </span>
+              <span style={{ color: "var(--terrain-cyan)" }}>
+                95% (&plusmn;{project.validation.percentile95}m)
+              </span>
             </div>
-            <div className="bar-track" style={{ height: 4, background: 'rgba(180,200,210,0.1)', borderRadius: 2, overflow: 'hidden' }}>
-              <div className="bar-fill" style={{ width: '92%', height: '100%', background: 'var(--terrain-cyan)' }} />
+            <div
+              className="bar-track"
+              style={{
+                height: 4,
+                background: "rgba(180,200,210,0.1)",
+                borderRadius: 2,
+                overflow: "hidden",
+              }}
+            >
+              <div
+                className="bar-fill"
+                style={{
+                  width: "92%",
+                  height: "100%",
+                  background: "var(--terrain-cyan)",
+                }}
+              />
             </div>
           </div>
         </div>
       )}
 
       {/* === TAB 3: METADATA === */}
-      {tool === 'PROJECT' && activeTab === 'METADATA' && (
+      {tool === "PROJECT" && activeTab === "METADATA" && (
         <div className="inspector-section">
           <small className="section-kicker">SPATIAL METADATA</small>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-            <div className="val-card"><small>COORDINATE REFERENCE</small><b>{project.location.crs}</b></div>
-            <div className="val-card"><small>SPATIAL RESOLUTION</small><b>{project.location.gsd ? `${project.location.gsd} m/px` : 'Relative'}</b></div>
-            <div className="val-card"><small>VERTICAL DATUM</small><b>{project.location.elevationDatum}</b></div>
-            <div className="val-card"><small>PROCESSING ENGINE</small><b>ViT-Large v2.4</b></div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              marginTop: 12,
+            }}
+          >
+            <div className="val-card">
+              <small>COORDINATE REFERENCE</small>
+              <b>{project.location.crs}</b>
+            </div>
+            <div className="val-card">
+              <small>SPATIAL RESOLUTION</small>
+              <b>
+                {project.location.gsd
+                  ? `${project.location.gsd} m/px`
+                  : "Relative"}
+              </b>
+            </div>
+            <div className="val-card">
+              <small>VERTICAL DATUM</small>
+              <b>{project.location.elevationDatum}</b>
+            </div>
+            <div className="val-card">
+              <small>PROCESSING ENGINE</small>
+              <b>Reported by API job</b>
+            </div>
           </div>
         </div>
       )}
 
       {/* === CONTEXTUAL: LOCATION === */}
-      {tool === 'LOCATION' && (
+      {tool === "LOCATION" && (
         <div className="inspector-section">
           <small className="section-kicker">GEOSPATIAL COORDINATES</small>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
-            <div className="val-card"><small>LATITUDE</small><b>{project.location.latitude ? `${project.location.latitude}° N` : '27.9881° N'}</b></div>
-            <div className="val-card"><small>LONGITUDE</small><b>{project.location.longitude ? `${project.location.longitude}° E` : '86.9250° E'}</b></div>
-            <div className="val-card"><small>SPATIAL CRS</small><b>{project.location.crs}</b></div>
-            <div className="val-card"><small>GSD RESOLUTION</small><b>{project.location.gsd ? `${project.location.gsd} m/px` : '0.5 m/px'}</b></div>
-            <div className="val-card"><small>ELEVATION DATUM</small><b>{project.location.elevationDatum}</b></div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              marginTop: 12,
+            }}
+          >
+            <div className="val-card">
+              <small>LATITUDE</small>
+              <b>{project.location.latitude ?? "Unavailable"}</b>
+            </div>
+            <div className="val-card">
+              <small>LONGITUDE</small>
+              <b>{project.location.longitude ?? "Unavailable"}</b>
+            </div>
+            <div className="val-card">
+              <small>SPATIAL CRS</small>
+              <b>{project.location.crs}</b>
+            </div>
+            <div className="val-card">
+              <small>GSD RESOLUTION</small>
+              <b>
+                {project.location.gsd
+                  ? `${project.location.gsd} m/px`
+                  : "Unavailable"}
+              </b>
+            </div>
+            <div className="val-card">
+              <small>ELEVATION DATUM</small>
+              <b>{project.location.elevationDatum}</b>
+            </div>
           </div>
         </div>
       )}
 
       {/* === CONTEXTUAL: AOI === */}
-      {tool === 'AOI' && (
+      {tool === "AOI" && (
         <div className="inspector-section">
           <small className="section-kicker">BOUNDING BOX &amp; COVERAGE</small>
           <div className="validation-grid" style={{ marginTop: 12 }}>
-            <div className="val-card"><small>BOUNDING EXTENT</small><b>12.5 <span className="unit">km²</span></b></div>
-            <div className="val-card"><small>GROUND PIXELS</small><b>2.4M <span className="unit">px</span></b></div>
-            <div className="val-card"><small>NORTH BOUND</small><b>28.02° N</b></div>
-            <div className="val-card"><small>EAST BOUND</small><b>86.98° E</b></div>
+            <div className="val-card">
+              <small>BOUNDING EXTENT</small>
+              <b>
+                {project.dsmMetadata?.bounds
+                  ? JSON.stringify(project.dsmMetadata.bounds)
+                  : "Unavailable"}
+              </b>
+            </div>
+            <div className="val-card">
+              <small>VALID PIXELS</small>
+              <b>
+                {String(project.dsmMetadata?.valid_pixels ?? "Unavailable")}
+              </b>
+            </div>
+            <div className="val-card">
+              <small>DIMENSIONS</small>
+              <b>
+                {project.dsmMetadata?.dimensions
+                  ? JSON.stringify(project.dsmMetadata.dimensions)
+                  : "Unavailable"}
+              </b>
+            </div>
+            <div className="val-card">
+              <small>CRS</small>
+              <b>{String(project.dsmMetadata?.crs ?? "Unavailable")}</b>
+            </div>
           </div>
         </div>
       )}
 
       {/* === CONTEXTUAL: LAYERS (SEMANTIC CLASSES) === */}
-      {(tool === 'LAYERS' || view === 'SEMANTIC') && (
+      {(tool === "LAYERS" || view === "SEMANTIC") && (
         <div className="inspector-section">
           <div className="section-title-row">
             <small>SEMANTIC LANDCOVER CLASSES</small>
-            <button className="text-link-btn" onClick={() => setActiveSemanticClass(null)}>Show All</button>
+            <button
+              className="text-link-btn"
+              onClick={() => setActiveSemanticClass(null)}
+            >
+              Show All
+            </button>
           </div>
           <div className="semantic-class-list">
-            <div 
-              className={`sem-item ${activeSemanticClass === 'ground' ? 'active' : ''}`}
-              onClick={() => setActiveSemanticClass(activeSemanticClass === 'ground' ? null : 'ground')}
+            <div
+              className={`sem-item ${activeSemanticClass === "ground" ? "active" : ""}`}
+              onClick={() =>
+                setActiveSemanticClass(
+                  activeSemanticClass === "ground" ? null : "ground",
+                )
+              }
             >
               <span className="sem-color ground" />
               <div className="sem-info">
@@ -328,9 +544,13 @@ export function Inspector({
               <b>{sem.ground}%</b>
             </div>
 
-            <div 
-              className={`sem-item ${activeSemanticClass === 'canopy' ? 'active' : ''}`}
-              onClick={() => setActiveSemanticClass(activeSemanticClass === 'canopy' ? null : 'canopy')}
+            <div
+              className={`sem-item ${activeSemanticClass === "canopy" ? "active" : ""}`}
+              onClick={() =>
+                setActiveSemanticClass(
+                  activeSemanticClass === "canopy" ? null : "canopy",
+                )
+              }
             >
               <span className="sem-color canopy" />
               <div className="sem-info">
@@ -340,9 +560,13 @@ export function Inspector({
               <b>{sem.canopy}%</b>
             </div>
 
-            <div 
-              className={`sem-item ${activeSemanticClass === 'structures' ? 'active' : ''}`}
-              onClick={() => setActiveSemanticClass(activeSemanticClass === 'structures' ? null : 'structures')}
+            <div
+              className={`sem-item ${activeSemanticClass === "structures" ? "active" : ""}`}
+              onClick={() =>
+                setActiveSemanticClass(
+                  activeSemanticClass === "structures" ? null : "structures",
+                )
+              }
             >
               <span className="sem-color structures" />
               <div className="sem-info">
@@ -352,9 +576,13 @@ export function Inspector({
               <b>{sem.structures}%</b>
             </div>
 
-            <div 
-              className={`sem-item ${activeSemanticClass === 'water' ? 'active' : ''}`}
-              onClick={() => setActiveSemanticClass(activeSemanticClass === 'water' ? null : 'water')}
+            <div
+              className={`sem-item ${activeSemanticClass === "water" ? "active" : ""}`}
+              onClick={() =>
+                setActiveSemanticClass(
+                  activeSemanticClass === "water" ? null : "water",
+                )
+              }
             >
               <span className="sem-color water" />
               <div className="sem-info">
@@ -368,59 +596,126 @@ export function Inspector({
       )}
 
       {/* === CONTEXTUAL: MEASURE === */}
-      {tool === 'MEASURE' && (
+      {tool === "MEASURE" && (
         <div className="inspector-section">
           <small className="section-kicker">MEASUREMENT OUTPUT</small>
           {project.measurement ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-              <div className="val-card"><small>SURFACE DISTANCE</small><b>{project.measurement.distanceMeters} {isMetric ? 'm' : 'units'}</b></div>
-              <div className="val-card"><small>ELEVATION DELTA</small><b>+{project.measurement.elevationDelta} {isMetric ? 'm' : 'units'}</b></div>
-              <div className="val-card"><small>SLOPE ANGLE</small><b>{project.measurement.slopeDegrees}°</b></div>
-              <div className="val-card"><small>MAX ELEVATION</small><b>{project.measurement.maxElevation} {isMetric ? 'm' : 'units'}</b></div>
-              <div className="val-card"><small>MIN ELEVATION</small><b>{project.measurement.minElevation} {isMetric ? 'm' : 'units'}</b></div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                marginTop: 12,
+              }}
+            >
+              <div className="val-card">
+                <small>SURFACE DISTANCE</small>
+                <b>
+                  {project.measurement.distanceMeters}{" "}
+                  {isMetric ? "m" : "units"}
+                </b>
+              </div>
+              <div className="val-card">
+                <small>ELEVATION DELTA</small>
+                <b>
+                  +{project.measurement.elevationDelta}{" "}
+                  {isMetric ? "m" : "units"}
+                </b>
+              </div>
+              <div className="val-card">
+                <small>SLOPE ANGLE</small>
+                <b>{project.measurement.slopeDegrees}°</b>
+              </div>
+              <div className="val-card">
+                <small>MAX ELEVATION</small>
+                <b>
+                  {project.measurement.maxElevation} {isMetric ? "m" : "units"}
+                </b>
+              </div>
+              <div className="val-card">
+                <small>MIN ELEVATION</small>
+                <b>
+                  {project.measurement.minElevation} {isMetric ? "m" : "units"}
+                </b>
+              </div>
             </div>
           ) : (
-            <p className="empty-hint" style={{ marginTop: '12px' }}>
-              Click two points on the terrain to calculate a longitudinal cross-section and measure surface distance.
+            <p className="empty-hint" style={{ marginTop: "12px" }}>
+              Click two points on the terrain to calculate a longitudinal
+              cross-section and measure surface distance.
             </p>
           )}
         </div>
       )}
 
       {/* === CONTEXTUAL: ANNOTATE === */}
-      {tool === 'ANNOTATE' && (
+      {tool === "ANNOTATE" && (
         <div className="inspector-section">
-          <small className="section-kicker">SURVEY MARKERS ({project.annotations.length})</small>
+          <small className="section-kicker">
+            SURVEY MARKERS ({project.annotations.length})
+          </small>
           <div className="annotation-list">
-            {project.annotations.map(a => (
+            {project.annotations.map((a) => (
               <div key={a.id} className="ann-item">
                 <span className="ann-dot">✦</span>
                 <div className="ann-text">
                   <strong>{a.label}</strong>
-                  <small>Coords: {a.x}%, {a.y}% · {a.elevation || 4832}m</small>
+                  <small>
+                    Coords: {a.x}%, {a.y}% · {a.elevation || 4832}m
+                  </small>
                 </div>
-                <button className="del-btn" onClick={() => onDeleteAnnotation(a.id)} aria-label="Delete survey marker">✕</button>
+                <button
+                  className="del-btn"
+                  onClick={() => onDeleteAnnotation(a.id)}
+                  aria-label="Delete survey marker"
+                >
+                  ✕
+                </button>
               </div>
             ))}
             {project.annotations.length === 0 && (
-              <p className="empty-hint">Click anywhere on the terrain surface to place a survey point marker.</p>
+              <p className="empty-hint">
+                Click anywhere on the terrain surface to place a survey point
+                marker.
+              </p>
             )}
           </div>
         </div>
       )}
 
       {/* === CONTEXTUAL: VALIDATE === */}
-      {tool === 'VALIDATE' && isMetric && (
+      {tool === "VALIDATE" && hasValidation && (
         <div className="inspector-section">
           <div className="section-title-row">
             <small>BENCHMARK ACCURACY</small>
-            <button className="text-link-btn" onClick={onOpenValidation}>Open Modal ↗</button>
+            <button className="text-link-btn" onClick={onOpenValidation}>
+              Open Modal ↗
+            </button>
           </div>
           <div className="validation-grid">
-            <div className="val-card"><small>RMSE</small><b>{project.validation.rmse} <span className="unit">m</span></b></div>
-            <div className="val-card"><small>MAE</small><b>{project.validation.mae} <span className="unit">m</span></b></div>
-            <div className="val-card"><small>R² COEFF</small><b>{project.validation.r2}</b></div>
-            <div className="val-card"><small>95% CONF</small><b>&plusmn;{project.validation.percentile95} <span className="unit">m</span></b></div>
+            <div className="val-card">
+              <small>RMSE</small>
+              <b>
+                {project.validation.rmse} <span className="unit">m</span>
+              </b>
+            </div>
+            <div className="val-card">
+              <small>MAE</small>
+              <b>
+                {project.validation.mae} <span className="unit">m</span>
+              </b>
+            </div>
+            <div className="val-card">
+              <small>R² COEFF</small>
+              <b>{project.validation.r2}</b>
+            </div>
+            <div className="val-card">
+              <small>95% CONF</small>
+              <b>
+                &plusmn;{project.validation.percentile95}{" "}
+                <span className="unit">m</span>
+              </b>
+            </div>
           </div>
         </div>
       )}

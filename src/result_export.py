@@ -40,6 +40,13 @@ def export_processing_result(
             paths["uncertainty"] = save_array(directory / "uncertainty.npy", result.uncertainty)
 
     paths["mesh"] = export_glb(result.mesh, directory / "terrain.glb", texture)
+    if texture is not None:
+        from PIL import Image
+        from src.mesh.texture_mapper import prepare_texture
+
+        texture_path = directory / "texture.png"
+        Image.fromarray(prepare_texture(texture)).save(texture_path)
+        paths["rgb_texture"] = texture_path
     metadata: dict[str, Any] = {
         "is_metric": result.is_metric,
         "relative_depth_shape": list(result.relative_depth.shape),

@@ -115,6 +115,35 @@ def process_path(
             uncertainty=result.uncertainty,
         )
 
+    if input_path.suffix.lower() in {".h5", ".hdf5"}:
+        from src.io.hdf5_loader import load_hdf5_elevation, load_hdf5_image
+
+        elevation = load_hdf5_elevation(input_path)
+        if elevation is not None:
+            heightfield = create_heightfield(
+                elevation,
+                transform or Affine.identity(),
+                vertical_exaggeration,
+            )
+            return ProcessingResult(
+                relative_depth=elevation.copy(),
+                dsm=elevation,
+                is_metric=False,
+                heightfield=heightfield,
+                mesh=generate_terrain_mesh(heightfield),
+            )
+
+        loaded_hdf5 = load_hdf5_image(input_path)
+        return process_image(
+            loaded_hdf5.data,
+            model,
+            calibration,
+            vertical_exaggeration=vertical_exaggeration,
+            tile_size=tile_size,
+            overlap=overlap,
+            reference_elevation=reference_elevation,
+        )
+
     loaded_image = load_image(input_path)
     return process_image(
         loaded_image.data,

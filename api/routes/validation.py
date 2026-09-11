@@ -12,4 +12,6 @@ async def validation_results(job_id: str) -> ValidationResponse:
     results = job.results.get("validation") or job.results.get("pipeline", {}).get("validation")
     if results is None:
         raise APIError(404, "VALIDATION_NOT_FOUND", f"No validation results are available for job '{job_id}'.")
-    return ValidationResponse(**response_job(job), results=results)
+    data = response_job(job)
+    data["results"] = results
+    return ValidationResponse(**data)

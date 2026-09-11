@@ -44,3 +44,32 @@ def test_job_status_is_available(client):
 
     assert response.status_code == 200
     assert response.json()["status"] == "PROCESSING"
+
+
+def test_valid_h5_upload_creates_queued_job(client, monkeypatch):
+    import io
+    import h5py
+    import numpy as np
+
+    buf = io.BytesIO()
+    with h5py.File(buf, "w") as f:
+        f.create_dataset("rgb", data=np.ones((32, 32, 3), dtype=np.uint8))
+    h5_bytes = buf.getvalue()
+
+    async def leave_queued(_: str):
+        return None
+
+    monkeypatch.setattr("api.routes.inference.run_pipeline", leave_queued)
+    response = client.post("/inference", files={"file": ("scene.h5", h5_bytes, "application/x-hdf5")})
+
+    assert response.status_code == 202
+    body = response.json()
+    assert body["status"] == "QUEUED"
+    assert services.jobs.get(body["job_id"]).input_file == "scene.h5"
+
+
+def test_rejects_corrupted_h5(client):
+    response = client.post("/inference", files={"file": ("broken.h5", b"not-a-hdf5-file", "application/x-hdf5")})
+
+    assert response.status_code == 400
+    assert response.json()["code"] == "CORRUPTED_HDF5"

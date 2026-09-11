@@ -25,7 +25,8 @@ def _dsm_path(job_id: str) -> Path:
 @router.get("/dsm/{job_id}")
 async def download_dsm(job_id: str) -> FileResponse:
     path = _dsm_path(job_id)
-    return FileResponse(path, media_type="image/tiff", filename=f"{job_id}.tif")
+    media_type = "image/tiff" if path.suffix.lower() in {".tif", ".tiff"} else "application/octet-stream"
+    return FileResponse(path, media_type=media_type, filename=path.name)
 
 
 @router.get("/dsm/{job_id}/metadata", response_model=DSMResponse)

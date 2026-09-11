@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image, UnidentifiedImageError
 
 LOGGER = logging.getLogger(__name__)
-SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tif", ".tiff"}
+SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".h5", ".hdf5"}
 
 
 @dataclass(frozen=True)
@@ -24,8 +24,13 @@ def load_image(path: str | Path) -> LoadedImage:
 	image_path = Path(path)
 	if not image_path.is_file():
 		raise FileNotFoundError(f"image does not exist: {image_path}")
-	if image_path.suffix.lower() not in SUPPORTED_EXTENSIONS:
+	suffix = image_path.suffix.lower()
+	if suffix not in SUPPORTED_EXTENSIONS:
 		raise ValueError(f"unsupported image extension: {image_path.suffix or '<none>'}")
+
+	if suffix in {".h5", ".hdf5"}:
+		from src.io.hdf5_loader import load_hdf5_image
+		return load_hdf5_image(image_path)
 
 	try:
 		with Image.open(image_path) as image:

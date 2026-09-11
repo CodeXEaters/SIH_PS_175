@@ -11,6 +11,8 @@ class JobResponse(BaseModel):
     status: str
     created_at: datetime
     updated_at: datetime
+    results: dict[str, Any] = Field(default_factory=dict)
+    error: dict[str, Any] | None = None
 
 
 class InferenceResponse(JobResponse):

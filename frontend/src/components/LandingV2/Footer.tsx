@@ -5,7 +5,11 @@ export function Footer() {
         {/* Brand */}
         <div className="footer-brand">
           <div className="footer-logo-row">
-            <span className="footer-brand-name">BHUDARPAN</span>
+            <img
+              src="/assets/bhudarpan-logo.png"
+              alt="Bhudarpan"
+              className="footer-logo-image"
+            />
           </div>
           <span className="footer-brand-tagline">Seeing a deeper Earth.</span>
         </div>
