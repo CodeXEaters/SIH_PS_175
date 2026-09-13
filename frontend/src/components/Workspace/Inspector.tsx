@@ -119,29 +119,64 @@ export function Inspector({
                 </button>
               </div>
 
-              {/* Compact 2x2 Information Grid */}
+              {/* Full 8-metric Information Grid */}
               <div className="validation-grid">
-                <div className="val-card">
-                  <small>RMSE</small>
-                  <b>
-                    {project.validation.rmse} <span className="unit">m</span>
-                  </b>
-                </div>
                 <div className="val-card">
                   <small>MAE</small>
                   <b>
-                    {project.validation.mae} <span className="unit">m</span>
+                    {typeof project.validation.mae === 'number' ? project.validation.mae.toFixed(2) : project.validation.mae} <span className="unit">m</span>
+                  </b>
+                </div>
+                <div className="val-card">
+                  <small>RMSE</small>
+                  <b>
+                    {typeof project.validation.rmse === 'number' ? project.validation.rmse.toFixed(2) : project.validation.rmse} <span className="unit">m</span>
                   </b>
                 </div>
                 <div className="val-card">
                   <small>R² COEFF</small>
-                  <b>{project.validation.r2}</b>
+                  <b>{typeof project.validation.r2 === 'number' ? project.validation.r2.toFixed(3) : project.validation.r2}</b>
+                </div>
+                <div className="val-card">
+                  <small>PEARSON</small>
+                  <b>
+                    {typeof (project.validation.pearson_correlation ?? project.validation.correlation) === 'number'
+                      ? (project.validation.pearson_correlation ?? project.validation.correlation)?.toFixed(3)
+                      : 'N/A'}
+                  </b>
+                </div>
+                <div className="val-card">
+                  <small>MEAN BIAS</small>
+                  <b>
+                    {typeof project.validation.bias === 'number'
+                      ? `${project.validation.bias >= 0 ? '+' : ''}${project.validation.bias.toFixed(2)}`
+                      : project.validation.bias}{" "}
+                    <span className="unit">m</span>
+                  </b>
+                </div>
+                <div className="val-card">
+                  <small>MEDIAN AE</small>
+                  <b>
+                    {typeof project.validation.median_ae === 'number'
+                      ? `${project.validation.median_ae.toFixed(2)}`
+                      : 'N/A'}{" "}
+                    <span className="unit">m</span>
+                  </b>
                 </div>
                 <div className="val-card">
                   <small>95% CONF</small>
                   <b>
-                    &plusmn;{project.validation.percentile95}{" "}
+                    &plusmn;{typeof project.validation.percentile95 === 'number' ? project.validation.percentile95.toFixed(2) : project.validation.percentile95}{" "}
                     <span className="unit">m</span>
+                  </b>
+                </div>
+                <div className="val-card">
+                  <small>SAMPLES</small>
+                  <b>
+                    {typeof project.validation.valid_pixels === 'number'
+                      ? project.validation.valid_pixels.toLocaleString()
+                      : 'N/A'}{" "}
+                    <span className="unit">px</span>
                   </b>
                 </div>
               </div>
@@ -694,26 +729,61 @@ export function Inspector({
           </div>
           <div className="validation-grid">
             <div className="val-card">
-              <small>RMSE</small>
+              <small>MAE</small>
               <b>
-                {project.validation.rmse} <span className="unit">m</span>
+                {typeof project.validation.mae === 'number' ? project.validation.mae.toFixed(2) : project.validation.mae} <span className="unit">m</span>
               </b>
             </div>
             <div className="val-card">
-              <small>MAE</small>
+              <small>RMSE</small>
               <b>
-                {project.validation.mae} <span className="unit">m</span>
+                {typeof project.validation.rmse === 'number' ? project.validation.rmse.toFixed(2) : project.validation.rmse} <span className="unit">m</span>
               </b>
             </div>
             <div className="val-card">
               <small>R² COEFF</small>
-              <b>{project.validation.r2}</b>
+              <b>{typeof project.validation.r2 === 'number' ? project.validation.r2.toFixed(3) : project.validation.r2}</b>
+            </div>
+            <div className="val-card">
+              <small>PEARSON</small>
+              <b>
+                {typeof (project.validation.pearson_correlation ?? project.validation.correlation) === 'number'
+                  ? (project.validation.pearson_correlation ?? project.validation.correlation)?.toFixed(3)
+                  : 'N/A'}
+              </b>
+            </div>
+            <div className="val-card">
+              <small>MEAN BIAS</small>
+              <b>
+                {typeof project.validation.bias === 'number'
+                  ? `${project.validation.bias >= 0 ? '+' : ''}${project.validation.bias.toFixed(2)}`
+                  : project.validation.bias}{" "}
+                <span className="unit">m</span>
+              </b>
+            </div>
+            <div className="val-card">
+              <small>MEDIAN AE</small>
+              <b>
+                {typeof project.validation.median_ae === 'number'
+                  ? `${project.validation.median_ae.toFixed(2)}`
+                  : 'N/A'}{" "}
+                <span className="unit">m</span>
+              </b>
             </div>
             <div className="val-card">
               <small>95% CONF</small>
               <b>
-                &plusmn;{project.validation.percentile95}{" "}
+                &plusmn;{typeof project.validation.percentile95 === 'number' ? project.validation.percentile95.toFixed(2) : project.validation.percentile95}{" "}
                 <span className="unit">m</span>
+              </b>
+            </div>
+            <div className="val-card">
+              <small>SAMPLES</small>
+              <b>
+                {typeof project.validation.valid_pixels === 'number'
+                  ? project.validation.valid_pixels.toLocaleString()
+                  : 'N/A'}{" "}
+                <span className="unit">px</span>
               </b>
             </div>
           </div>

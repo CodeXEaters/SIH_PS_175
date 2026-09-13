@@ -1,0 +1,121 @@
+{
+  "dataset": "GAMUS AGL Validation Set",
+  "samples_evaluated": 3,
+  "summary": {
+    "baseline": {
+      "mae": 6.934553854910561,
+      "rmse": 8.917700198367024,
+      "r2": 0.022277596072262613,
+      "pearson_correlation": 0.20771940071096698,
+      "mean_bias": -0.7582178698792957,
+      "median_ae": 5.790624722626478,
+      "p95_ae": 19.171617427929565,
+      "valid_pixels": 1048576.0
+    },
+    "adapted": {
+      "mae": 12.509975254253888,
+      "rmse": 15.679301974987723,
+      "r2": -1.9673028487508095,
+      "pearson_correlation": 0.11650415050842887,
+      "mean_bias": -12.489674526578883,
+      "median_ae": 11.242810904979706,
+      "p95_ae": 28.95229848846793,
+      "valid_pixels": 1048576.0
+    }
+  },
+  "scenes": [
+    {
+      "scene_id": "DC_02_26",
+      "baseline": {
+        "mae": 7.251610366876929,
+        "rmse": 9.531160243854787,
+        "r2": 0.05161192331985898,
+        "correlation": 0.29162254653632913,
+        "mean_bias": -1.4362663320102527,
+        "median_absolute_error": 6.094467898662437,
+        "p95_absolute_error": 21.6803010766386,
+        "valid_count": 1048576,
+        "pearson_correlation": 0.29162254653632913,
+        "median_ae": 6.094467898662437,
+        "p95_ae": 21.6803010766386,
+        "valid_pixels": 1048576
+      },
+      "adapted": {
+        "mae": 8.7303661883831,
+        "rmse": 13.026071076847149,
+        "r2": -0.7714195360661693,
+        "correlation": 0.2783997911091359,
+        "mean_bias": -8.726946827095357,
+        "median_absolute_error": 5.220161557197571,
+        "p95_absolute_error": 30.31764116883278,
+        "valid_count": 1048576,
+        "pearson_correlation": 0.2783997911091359,
+        "median_ae": 5.220161557197571,
+        "p95_ae": 30.31764116883278,
+        "valid_pixels": 1048576
+      }
+    },
+    {
+      "scene_id": "DC_04_23",
+      "baseline": {
+        "mae": 8.922501350164714,
+        "rmse": 10.85823113096541,
+        "r2": 0.04040012136690685,
+        "correlation": 0.20575705202039138,
+        "mean_bias": 0.42119079975683604,
+        "median_absolute_error": 7.921770519913851,
+        "p95_absolute_error": 21.517951591043275,
+        "valid_count": 1048576,
+        "pearson_correlation": 0.20575705202039138,
+        "median_ae": 7.921770519913851,
+        "p95_ae": 21.517951591043275,
+        "valid_pixels": 1048576
+      },
+      "adapted": {
+        "mae": 22.84318252211014,
+        "rmse": 25.318495572833,
+        "r2": -4.217324066468398,
+        "correlation": 0.17680840765246894,
+        "mean_bias": -22.788220207572294,
+        "median_absolute_error": 24.664380967617035,
+        "p95_absolute_error": 37.73127371072769,
+        "valid_count": 1048576,
+        "pearson_correlation": 0.17680840765246894,
+        "median_ae": 24.664380967617035,
+        "p95_ae": 37.73127371072769,
+        "valid_pixels": 1048576
+      }
+    },
+    {
+      "scene_id": "DC_04_27",
+      "baseline": {
+        "mae": 4.629549847690038,
+        "rmse": 6.363709220280874,
+        "r2": -0.025179256469977984,
+        "correlation": 0.1257786035761804,
+        "mean_bias": -1.2595780773844705,
+        "median_absolute_error": 3.3556357493031457,
+        "p95_absolute_error": 14.316599616106826,
+        "valid_count": 1048576,
+        "pearson_correlation": 0.1257786035761804,
+        "median_ae": 3.3556357493031457,
+        "p95_ae": 14.316599616106826,
+        "valid_pixels": 1048576
+      },
+      "adapted": {
+        "mae": 5.956377052268419,
+        "rmse": 8.693339275283023,
+        "r2": -0.9131649437178615,
+        "correlation": -0.10569574723631821,
+        "mean_bias": -5.953856545068999,
+        "median_absolute_error": 3.8438901901245117,
+        "p95_absolute_error": 18.807980585843325,
+        "valid_count": 1048576,
+        "pearson_correlation": -0.10569574723631821,
+        "median_ae": 3.8438901901245117,
+        "p95_ae": 18.807980585843325,
+        "valid_pixels": 1048576
+      }
+    }
+  ]
+}

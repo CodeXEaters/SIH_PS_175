@@ -383,10 +383,11 @@ export const reconstructionService = {
     project: Project,
     file: File | undefined,
     onStage: (stage: Stage, progress: number, updatedProject: Project) => void,
+    referenceFile?: File,
   ) {
     if (!file)
       throw new Error("Select an image before starting reconstruction.");
-    const accepted = await uploadImage(file);
+    const accepted = await uploadImage(file, referenceFile);
     let currentProject = {
       ...project,
       jobId: accepted.job_id,
@@ -427,6 +428,36 @@ export const reconstructionService = {
         : null);
     const resolvedTextureUrl = assetUrl(textureEndpoint);
 
+    const rawVal = completed.results?.validation as Record<string, any> | undefined;
+    let validation = currentProject.validation;
+    if (rawVal) {
+      if (rawVal.available && rawVal.metrics) {
+        const m = rawVal.metrics;
+        validation = {
+          available: true,
+          referenceType: rawVal.reference?.source || "Reference Elevation",
+          rmse: Number(m.rmse ?? 0),
+          mae: Number(m.mae ?? 0),
+          r2: Number(m.r2 ?? 0),
+          bias: Number(m.mean_bias ?? m.bias ?? 0),
+          percentile95: Number(m.p95_ae ?? m.p95_error ?? m.percentile95 ?? 0),
+          correlation: m.correlation !== undefined ? Number(m.correlation) : undefined,
+          pearson_correlation: (m.pearson_correlation ?? m.correlation) !== undefined ? Number(m.pearson_correlation ?? m.correlation) : undefined,
+          median_ae: m.median_ae !== undefined ? Number(m.median_ae) : undefined,
+          valid_pixels: m.valid_pixels !== undefined ? Number(m.valid_pixels) : undefined,
+          source: rawVal.reference?.source,
+          reportUrl: assetUrl(rawVal.artifacts?.report_json),
+          csvUrl: assetUrl(rawVal.artifacts?.metrics_csv),
+        };
+      } else {
+        validation = {
+          ...validation,
+          available: false,
+          reason: rawVal.reason || "No reference elevation data supplied",
+        };
+      }
+    }
+
     currentProject = {
       ...currentProject,
       status: metadata?.is_metric ? "READY_METRIC" : "READY_RELATIVE",
@@ -436,6 +467,7 @@ export const reconstructionService = {
         url: resolvedTextureUrl || currentProject.source.url,
       },
       dsmMetadata: metadata,
+      validation,
       visualization: meshEndpoint
         ? {
             mesh: assetUrl(meshEndpoint),

@@ -225,6 +225,84 @@ def save_upload(filename: str, data: bytes) -> tuple[Job, Path]:
     return preliminary, destination
 
 
+def validate_reference_upload(filename: str | None, content_type: str | None, data: bytes) -> str:
+    name = safe_filename(filename)
+    if not data:
+        raise APIError(400, "EMPTY_FILE", "The uploaded reference file is empty.")
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise APIError(413, "FILE_TOO_LARGE", f"Upload exceeds the {MAX_UPLOAD_BYTES} byte limit.")
+    suffix = Path(name).suffix.lower()
+    if suffix not in ALLOWED_EXTENSIONS:
+        raise APIError(400, "UNSUPPORTED_FILE_TYPE", "Supported reference files are PNG, JPG, JPEG, TIFF, GeoTIFF, H5, and HDF5.")
+    return name
+
+
+def save_reference_upload(job_id: str, filename: str, data: bytes) -> Path:
+    directory = STORAGE_ROOT / job_id / "reference"
+    directory.mkdir(parents=True, exist_ok=True)
+    destination = directory / f"{uuid4().hex}_{filename}"
+    destination.write_bytes(data)
+    jobs.update(job_id, results={"reference_path": str(destination)})
+    return destination
+
+
+def find_paired_reference(input_path: str | Path) -> Path | None:
+    """Check if the input image has a corresponding paired reference (e.g. GAMUS AGL)."""
+    p = Path(input_path)
+    match = re.search(r"(DC_\d+_\d+)", p.stem, re.I)
+    if not match:
+        match_rgb = re.search(r"^(.*)_RGB$", p.stem, re.I)
+        scene_id = match_rgb.group(1) if match_rgb else None
+    else:
+        scene_id = match.group(1)
+
+    if scene_id:
+        gamus_root = PROJECT_ROOT / "data" / "raw" / "gamus" / "heights"
+        candidates = [
+            gamus_root / "validation" / f"{scene_id}_AGL.h5",
+            gamus_root / "train" / f"{scene_id}_AGL.h5",
+            gamus_root / f"{scene_id}_AGL.h5",
+            gamus_root / "validation" / f"{scene_id}_AGL.hdf5",
+            gamus_root / "train" / f"{scene_id}_AGL.hdf5",
+            gamus_root / f"{scene_id}_AGL.hdf5",
+        ]
+        for candidate in candidates:
+            if candidate.is_file():
+                return candidate
+    return None
+
+
+def load_reference_elevation(path: str | Path) -> tuple[np.ndarray | None, Any | None]:
+    """Load reference elevation raster and optional spatial metadata."""
+    ref_path = Path(path)
+    if not ref_path.is_file():
+        return None, None
+    suffix = ref_path.suffix.lower()
+    if suffix in {".h5", ".hdf5"}:
+        from src.io.hdf5_loader import load_hdf5_elevation
+        arr = load_hdf5_elevation(ref_path)
+        return arr, None
+    elif suffix in {".tif", ".tiff"}:
+        from src.io.geotiff_reader import read_geotiff
+        try:
+            geo = read_geotiff(ref_path)
+            arr = geo.data[..., 0] if geo.data.ndim == 3 else geo.data
+            return np.asarray(arr, dtype=np.float32), geo.metadata
+        except Exception:
+            import rasterio
+            with rasterio.open(ref_path) as ds:
+                arr = ds.read(1)
+                return np.asarray(arr, dtype=np.float32), None
+    else:
+        from PIL import Image
+        try:
+            with Image.open(ref_path) as img:
+                arr = np.asarray(img.convert("L"), dtype=np.float32)
+                return arr, None
+        except Exception:
+            return None, None
+
+
 def queue_job(job_id: str) -> Job:
     return jobs.update(job_id, status="QUEUED")
 
@@ -274,6 +352,56 @@ async def run_pipeline(job_id: str) -> None:
             tile_size=model_config.get("tile_size"),
             overlap=float(model_config.get("overlap", 0.25)),
         )
+
+        ref_path_str = job.results.get("reference_path")
+        ref_path = Path(ref_path_str) if ref_path_str else find_paired_reference(job.results["input_path"])
+
+        validation_data = {
+            "available": False,
+            "reason": "No reference elevation data supplied",
+            "metrics": None,
+            "reference": None,
+        }
+
+        if ref_path is not None and ref_path.is_file():
+            try:
+                jobs.update(job_id, status="VALIDATION")
+                ref_data, ref_meta = await asyncio.to_thread(load_reference_elevation, ref_path)
+                if ref_data is not None:
+                    from src.validation.alignment import align_elevation_reference
+                    from src.validation.metrics import calculate_metrics
+
+                    aligned_ref, mask = await asyncio.to_thread(
+                        align_elevation_reference,
+                        result.dsm,
+                        ref_data,
+                        pred_metadata=result.raster_metadata,
+                        ref_metadata=ref_meta,
+                    )
+                    metrics_obj = await asyncio.to_thread(calculate_metrics, result.dsm, aligned_ref, mask)
+                    metrics_dict = metrics_obj.to_dict()
+                    validation_data = {
+                        "available": True,
+                        "metrics": metrics_dict,
+                        "reference": {
+                            "source": ref_path.name,
+                            "shape": list(ref_data.shape),
+                            "valid_pixels": int(metrics_obj.valid_pixels),
+                        },
+                        "artifacts": {
+                            "report_json": f"/validation/{job_id}/report.json",
+                            "metrics_csv": f"/validation/{job_id}/metrics.csv",
+                        },
+                    }
+            except Exception as val_exc:
+                LOGGER.warning("Validation calculation failed for job %s: %s", job_id, val_exc)
+                validation_data = {
+                    "available": False,
+                    "reason": f"Validation computation error: {val_exc}",
+                    "metrics": None,
+                    "reference": None,
+                }
+
         jobs.update(job_id, status="MESH_GENERATION")
         # Load input image to embed as photo-texture on the 3D GLB mesh
         from src.io.image_loader import load_image
@@ -285,7 +413,7 @@ async def run_pipeline(job_id: str) -> None:
             input_texture = loaded_img.data
         except Exception:
             pass
-        exported = await asyncio.to_thread(export_processing_result, result, STORAGE_ROOT / job_id / "results", texture=input_texture)
+        exported = await asyncio.to_thread(export_processing_result, result, STORAGE_ROOT / job_id / "results", texture=input_texture, validation_data=validation_data)
         finite = result.dsm[np.isfinite(result.dsm)]
         metadata = {
             "is_metric": result.is_metric,
@@ -308,6 +436,7 @@ async def run_pipeline(job_id: str) -> None:
             "pipeline": {"is_metric": result.is_metric},
             "dsm_path": str(exported["dsm"]),
             "dsm_metadata": metadata,
+            "validation": validation_data,
             "visualization": {
                 "mesh_path": str(exported["mesh"]),
                 "dsm_path": str(exported["dsm"]),

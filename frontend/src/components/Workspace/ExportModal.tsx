@@ -166,6 +166,28 @@ export function ExportModal({ project, onClose }: ExportModalProps) {
     setTimeout(() => setDownloadingFormat(null), 600);
   };
 
+  const handleExportValidation = () => {
+    setDownloadingFormat("VALIDATION");
+    if (project.validation.csvUrl) {
+      window.open(project.validation.csvUrl, "_blank");
+    } else {
+      const v = project.validation;
+      const csvContent = [
+        '"Metric","Value","Unit","Description"',
+        `"MAE",${v.mae},"m","Mean Absolute Error"`,
+        `"RMSE",${v.rmse},"m","Root Mean Square Error"`,
+        `"R2",${v.r2},"-","Coefficient of Determination"`,
+        `"Pearson Correlation",${v.pearson_correlation ?? v.correlation ?? ""},"-","Pearson Correlation"`,
+        `"Mean Bias",${v.bias},"m","Mean Bias Error"`,
+        `"Median Absolute Error",${v.median_ae ?? ""},"m","Median Absolute Error"`,
+        `"P95 Absolute Error",${v.percentile95},"m","95th Percentile Error"`,
+        `"Valid Samples",${v.valid_pixels ?? ""},"count","Valid Sample Pixel Count"`,
+      ].join("\n");
+      downloadFile(`${project.name.toLowerCase()}_validation_benchmark.csv`, csvContent, "text/csv");
+    }
+    setTimeout(() => setDownloadingFormat(null), 600);
+  };
+
   const handlePrintReport = () => {
     const reportHtml = `
       <!DOCTYPE html>
@@ -198,14 +220,17 @@ export function ExportModal({ project, onClose }: ExportModalProps) {
           <tr><td>Linear Fit (R²)</td><td>${project.calibration.r2 || 0.96}</td><td><span class="badge">STRONG</span></td></tr>
         </table>
 
-        <h2>2. Benchmark Accuracy Metrics</h2>
+        <h2>2. Benchmark Accuracy Metrics (8 Core Metrics)</h2>
         <table>
-          <tr><th>Metric</th><th>Observed Value</th><th>SIH Target</th><th>Verdict</th></tr>
-          <tr><td>RMSE</td><td>${project.validation.rmse} m</td><td>&lt; 5.0 m</td><td>PASSED</td></tr>
-          <tr><td>MAE</td><td>${project.validation.mae} m</td><td>&lt; 4.0 m</td><td>PASSED</td></tr>
-          <tr><td>Coefficient (R²)</td><td>${project.validation.r2}</td><td>&gt; 0.85</td><td>PASSED</td></tr>
-          <tr><td>Mean Bias Error</td><td>${project.validation.bias} m</td><td>&plusmn; 1.0 m</td><td>PASSED</td></tr>
-          <tr><td>95% Confidence Bound</td><td>&plusmn; ${project.validation.percentile95} m</td><td>&lt; 10.0 m</td><td>PASSED</td></tr>
+          <tr><th>Metric</th><th>Observed Value</th><th>Unit</th><th>Verdict</th></tr>
+          <tr><td>MAE (Mean Absolute Error)</td><td>${project.validation.mae}</td><td>m</td><td>EVALUATED</td></tr>
+          <tr><td>RMSE (Root Mean Square Error)</td><td>${project.validation.rmse}</td><td>m</td><td>EVALUATED</td></tr>
+          <tr><td>Coefficient of Determination (R²)</td><td>${project.validation.r2}</td><td>-</td><td>EVALUATED</td></tr>
+          <tr><td>Pearson Correlation</td><td>${project.validation.pearson_correlation ?? project.validation.correlation ?? "N/A"}</td><td>-</td><td>EVALUATED</td></tr>
+          <tr><td>Mean Bias Error</td><td>${project.validation.bias}</td><td>m</td><td>EVALUATED</td></tr>
+          <tr><td>Median Absolute Error</td><td>${project.validation.median_ae ?? "N/A"}</td><td>m</td><td>EVALUATED</td></tr>
+          <tr><td>95% Confidence Bound (P95)</td><td>&plusmn; ${project.validation.percentile95}</td><td>m</td><td>EVALUATED</td></tr>
+          <tr><td>Valid Pixels Evaluated</td><td>${project.validation.valid_pixels ? project.validation.valid_pixels.toLocaleString() : "N/A"}</td><td>samples</td><td>VERIFIED</td></tr>
         </table>
 
         <h2>3. Semantic Landcover Breakdown</h2>
@@ -337,6 +362,24 @@ export function ExportModal({ project, onClose }: ExportModalProps) {
             </div>
             <button className="export-row-btn" onClick={handleExportMetadata}>
               {downloadingFormat === "JSON" ? "Exporting…" : "Download"}
+            </button>
+          </div>
+
+          {/* Validation Benchmark Metrics (.CSV) */}
+          <div className="export-row" role="listitem">
+            <div className="export-row-left">
+              <div className="export-row-icon" aria-hidden="true">
+                <IconAudit />
+              </div>
+              <div className="export-row-info">
+                <strong>Validation Benchmark Metrics (.CSV)</strong>
+                <p>
+                  Observed residual errors (MAE, RMSE, R², Pearson, Bias, P95, Valid Count).
+                </p>
+              </div>
+            </div>
+            <button className="export-row-btn" onClick={handleExportValidation}>
+              {downloadingFormat === "VALIDATION" ? "Exporting…" : "Download"}
             </button>
           </div>
 

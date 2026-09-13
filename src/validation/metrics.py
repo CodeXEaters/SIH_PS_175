@@ -18,9 +18,30 @@ class ElevationMetrics:
 	p95_absolute_error: float
 	valid_count: int
 
+	@property
+	def valid_pixels(self) -> int:
+		return self.valid_count
+
+	@property
+	def median_ae(self) -> float:
+		return self.median_absolute_error
+
+	@property
+	def p95_ae(self) -> float:
+		return self.p95_absolute_error
+
+	@property
+	def pearson_correlation(self) -> float:
+		return self.correlation
+
 	def to_dict(self) -> dict[str, float | int]:
 		"""Return metrics in a JSON-compatible mapping."""
-		return asdict(self)
+		data = asdict(self)
+		data["pearson_correlation"] = self.correlation
+		data["median_ae"] = self.median_absolute_error
+		data["p95_ae"] = self.p95_absolute_error
+		data["valid_pixels"] = self.valid_count
+		return data
 
 
 def calculate_metrics(

@@ -66,6 +66,14 @@ export interface Validation {
   r2: number;
   bias: number;
   percentile95: number;
+  correlation?: number;
+  pearson_correlation?: number;
+  median_ae?: number;
+  valid_pixels?: number;
+  reason?: string;
+  source?: string;
+  reportUrl?: string | null;
+  csvUrl?: string | null;
 }
 
 export interface SemanticStats {

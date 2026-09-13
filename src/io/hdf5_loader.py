@@ -58,8 +58,8 @@ def _find_image_dataset(group: Any) -> np.ndarray:
     return found_datasets[0][1][()]
 
 
-def _find_elevation_dataset(group: Any) -> np.ndarray | None:
-    """Find a named 2D elevation/height raster without guessing RGB data."""
+def _find_elevation_dataset(group: Any, filename: str | None = None) -> np.ndarray | None:
+    """Find a 2D elevation/height raster, using dataset names or filename hints."""
     import h5py
 
     found: list[tuple[str, Any]] = []
@@ -71,6 +71,34 @@ def _find_elevation_dataset(group: Any) -> np.ndarray | None:
                 found.append((name, obj))
 
     group.visititems(visitor)
+
+    # Fallback: if no dataset name matched hints, check if filename suggests elevation
+    # or the file contains 2D float arrays (e.g. GAMUS AGL stores (1024, 1024) under 'image')
+    if not found:
+        filename_hints = ("agl", "dsm", "dem", "elevation", "height")
+        is_filename_elevation = bool(filename and any(h in filename.lower() for h in filename_hints))
+
+        candidate_datasets: list[tuple[str, Any]] = []
+
+        def candidate_visitor(name: str, obj: Any) -> None:
+            if isinstance(obj, h5py.Dataset):
+                candidate_datasets.append((name, obj))
+
+        group.visititems(candidate_visitor)
+
+        for name, ds in candidate_datasets:
+            shape = ds.shape
+            if ds.ndim == 2 or (ds.ndim == 3 and (shape[0] == 1 or shape[-1] == 1)):
+                if is_filename_elevation or name.lower() in ("image", "data", "raster", "elevation"):
+                    found.append((name, ds))
+                    break
+
+        if not found and is_filename_elevation and candidate_datasets:
+            for name, ds in candidate_datasets:
+                if ds.ndim in (2, 3):
+                    found.append((name, ds))
+                    break
+
     if not found:
         return None
 
@@ -94,8 +122,9 @@ def load_hdf5_elevation(path: str | Path) -> np.ndarray | None:
     except ImportError as exc:
         raise RuntimeError("h5py must be installed to load .h5 / .hdf5 files") from exc
 
-    with h5py.File(Path(path), "r") as h5_file:
-        return _find_elevation_dataset(h5_file)
+    file_path = Path(path)
+    with h5py.File(file_path, "r") as h5_file:
+        return _find_elevation_dataset(h5_file, filename=file_path.name)
 
 
 def _format_rgb_array(raw: np.ndarray) -> np.ndarray:

@@ -9,7 +9,7 @@ interface ValidationPanelProps {
 export function ValidationPanel({ project, onClose }: ValidationPanelProps) {
   const [valView, setValView] = useState<'PREDICTED' | 'REFERENCE' | 'DIFFERENCE'>('DIFFERENCE');
   const val = project.validation;
-  const isAvailable = val.available && project.reconstructionMode === 'metric';
+  const isAvailable = Boolean(val && val.available);
 
   return (
     <div className="modal-backdrop animate-fade-in" onClick={onClose} role="dialog" aria-modal="true" aria-label="Scientific Validation Panel">
@@ -25,43 +25,101 @@ export function ValidationPanel({ project, onClose }: ValidationPanelProps) {
         {isAvailable ? (
           <>
             <p className="modal-desc">
-              Independent residual analysis comparing the reconstructed Bhudarpan DSM against a verified high-resolution reference dataset: <b>{val.referenceType}</b>.
+              Independent residual analysis comparing the reconstructed Bhudarpan DSM against a verified high-resolution reference dataset: <b>{val.referenceType || val.source || "Ground Truth"}</b>.
             </p>
 
-            {/* Error Metrics Summary Row */}
-            <div className="validation-grid" style={{ marginBottom: 20 }}>
+            {/* 8 Error Metrics Summary Grid (2x4) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 20 }}>
               <div className="val-card">
-                <small>RMSE (ROOT MEAN SQUARE)</small>
-                <b>{val.rmse} <span className="unit">m</span></b>
+                <small>MAE (MEAN ABSOLUTE ERROR)</small>
+                <b>{typeof val.mae === 'number' ? val.mae.toFixed(2) : val.mae} <span className="unit">m</span></b>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--text-faint)', marginTop: 4 }}>
-                  Standard deviation of residuals
+                  Average absolute error
                 </span>
               </div>
 
               <div className="val-card">
-                <small>MAE (MEAN ABSOLUTE ERROR)</small>
-                <b>{val.mae} <span className="unit">m</span></b>
+                <small>RMSE (ROOT MEAN SQUARE)</small>
+                <b>{typeof val.rmse === 'number' ? val.rmse.toFixed(2) : val.rmse} <span className="unit">m</span></b>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--text-faint)', marginTop: 4 }}>
-                  Average elevation error
+                  Standard dev. of residuals
                 </span>
               </div>
 
               <div className="val-card">
                 <small>COEFFICIENT OF DETERMINATION (R²)</small>
-                <b>{val.r2}</b>
+                <b>{typeof val.r2 === 'number' ? val.r2.toFixed(3) : val.r2}</b>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--text-faint)', marginTop: 4 }}>
-                  Elevation correlation vs LiDAR
+                  Explained height variance
                 </span>
               </div>
 
               <div className="val-card">
-                <small>95TH PERCENTILE CONFIDENCE</small>
-                <b>&plusmn;{val.percentile95} <span className="unit">m</span></b>
+                <small>PEARSON CORRELATION</small>
+                <b>{typeof (val.pearson_correlation ?? val.correlation) === 'number' ? (val.pearson_correlation ?? val.correlation)?.toFixed(3) : 'N/A'}</b>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--text-faint)', marginTop: 4 }}>
+                  Linear elevation correlation
+                </span>
+              </div>
+
+              <div className="val-card">
+                <small>MEAN BIAS</small>
+                <b>{typeof val.bias === 'number' ? `${val.bias >= 0 ? '+' : ''}${val.bias.toFixed(2)}` : val.bias} <span className="unit">m</span></b>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--text-faint)', marginTop: 4 }}>
+                  Mean error (pred - ref)
+                </span>
+              </div>
+
+              <div className="val-card">
+                <small>MEDIAN ABSOLUTE ERROR</small>
+                <b>{typeof val.median_ae === 'number' ? val.median_ae.toFixed(2) : 'N/A'} <span className="unit">m</span></b>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--text-faint)', marginTop: 4 }}>
+                  Median residual error
+                </span>
+              </div>
+
+              <div className="val-card">
+                <small>95TH PERCENTILE CONFIDENCE (P95)</small>
+                <b>&plusmn;{typeof val.percentile95 === 'number' ? val.percentile95.toFixed(2) : val.percentile95} <span className="unit">m</span></b>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--text-faint)', marginTop: 4 }}>
                   Spatial error bounding limit
                 </span>
               </div>
+
+              <div className="val-card">
+                <small>VALID SAMPLE PIXELS</small>
+                <b>{typeof val.valid_pixels === 'number' ? val.valid_pixels.toLocaleString() : 'N/A'} <span className="unit">px</span></b>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--text-faint)', marginTop: 4 }}>
+                  Evaluated ground truth samples
+                </span>
+              </div>
             </div>
+
+            {/* Validation Artifact Downloads */}
+            {(val.reportUrl || val.csvUrl) && (
+              <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+                {val.reportUrl && (
+                  <a
+                    href={val.reportUrl}
+                    download="validation_report.json"
+                    className="export-row-btn"
+                    style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '11px' }}
+                  >
+                    Download Validation Report (.JSON) ↗
+                  </a>
+                )}
+                {val.csvUrl && (
+                  <a
+                    href={val.csvUrl}
+                    download="validation_metrics.csv"
+                    className="export-row-btn"
+                    style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '11px' }}
+                  >
+                    Download Benchmark Metrics (.CSV) ↗
+                  </a>
+                )}
+              </div>
+            )}
 
             {/* Comparative View Switcher Tabs */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 16 }} role="tablist">
@@ -196,7 +254,7 @@ export function ValidationPanel({ project, onClose }: ValidationPanelProps) {
         ) : (
           <div style={{ padding: '32px 16px', textAlign: 'center' }}>
             <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: 16 }}>
-              No reference elevation dataset attached for quantitative residual auditing. Relative disparity models require georeferenced ground anchors to compute RMSE.
+              {val?.reason || "No reference elevation dataset attached for quantitative residual auditing. Relative disparity models require georeferenced ground anchors to compute RMSE."}
             </p>
             <button className="export-row-btn" onClick={onClose}>
               Return to Workspace

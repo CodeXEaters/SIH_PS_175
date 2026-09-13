@@ -25,14 +25,25 @@ export function assetUrl(path: string | null | undefined): string | null {
   return /^https?:\/\//.test(path) ? path : `${apiBase}${path}`;
 }
 
-export async function uploadImage(file: File): Promise<ApiJob> {
+export async function uploadImage(file: File, referenceFile?: File): Promise<ApiJob> {
   const form = new FormData();
   form.append("file", file);
+  if (referenceFile) {
+    form.append("reference", referenceFile);
+  }
   return request<ApiJob>("/inference", { method: "POST", body: form });
 }
 
 export function getJob(jobId: string): Promise<ApiJob> {
   return request<ApiJob>(`/inference/${encodeURIComponent(jobId)}`);
+}
+
+export function getValidation(
+  jobId: string,
+): Promise<{
+  results: Record<string, unknown>;
+}> {
+  return request(`/validation/${encodeURIComponent(jobId)}`);
 }
 
 export function getDsmMetadata(
