@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import importlib
 import inspect
+import logging
 import os
 import re
 import threading
@@ -21,6 +22,8 @@ import numpy as np
 from uuid import uuid4
 
 from PIL import Image, UnidentifiedImageError
+
+LOGGER = logging.getLogger(__name__)
 
 JOB_STATUSES = frozenset(
     {
@@ -72,6 +75,15 @@ class JobStore:
         self._jobs: dict[str, Job] = {}
         self._lock = threading.RLock()
         self._sequence = 0
+        if STORAGE_ROOT.is_dir():
+            for item in STORAGE_ROOT.iterdir():
+                if item.is_dir() and item.name.startswith("DW-"):
+                    try:
+                        seq = int(item.name.split("-")[1])
+                        if seq > self._sequence:
+                            self._sequence = seq
+                    except (IndexError, ValueError):
+                        pass
 
     def create(self, input_file: str) -> Job:
         with self._lock:
@@ -260,14 +272,18 @@ def find_paired_reference(input_path: str | Path) -> Path | None:
         gamus_root = PROJECT_ROOT / "data" / "raw" / "gamus" / "heights"
         candidates = [
             gamus_root / "validation" / f"{scene_id}_AGL.h5",
+            gamus_root / "test" / f"{scene_id}_AGL.h5",
             gamus_root / "train" / f"{scene_id}_AGL.h5",
             gamus_root / f"{scene_id}_AGL.h5",
             gamus_root / "validation" / f"{scene_id}_AGL.hdf5",
+            gamus_root / "test" / f"{scene_id}_AGL.hdf5",
             gamus_root / "train" / f"{scene_id}_AGL.hdf5",
             gamus_root / f"{scene_id}_AGL.hdf5",
         ]
         for candidate in candidates:
             if candidate.is_file():
+                if p.name.endswith(candidate.name) or candidate.resolve() == p.resolve():
+                    continue
                 return candidate
     return None
 
@@ -415,15 +431,19 @@ async def run_pipeline(job_id: str) -> None:
             pass
         exported = await asyncio.to_thread(export_processing_result, result, STORAGE_ROOT / job_id / "results", texture=input_texture, validation_data=validation_data)
         finite = result.dsm[np.isfinite(result.dsm)]
+        if finite.size > 0:
+            elev_stats = {
+                "min": float(np.min(finite)), "max": float(np.max(finite)),
+                "mean": float(np.mean(finite)), "p05": float(np.percentile(finite, 5)),
+                "p95": float(np.percentile(finite, 95)),
+            }
+        else:
+            elev_stats = {"min": 0.0, "max": 0.0, "mean": 0.0, "p05": 0.0, "p95": 0.0}
         metadata = {
             "is_metric": result.is_metric,
             "source_kind": "elevation" if Path(job.results["input_path"]).suffix.lower() in {".h5", ".hdf5"} else "image",
             "dimensions": list(result.dsm.shape),
-            "elevation_statistics": {
-                "min": float(np.min(finite)), "max": float(np.max(finite)),
-                "mean": float(np.mean(finite)), "p05": float(np.percentile(finite, 5)),
-                "p95": float(np.percentile(finite, 95)),
-            },
+            "elevation_statistics": elev_stats,
             "valid_pixels": int(finite.size),
         }
         if result.raster_metadata is not None:
@@ -450,6 +470,7 @@ async def run_pipeline(job_id: str) -> None:
             },
         })
     except Exception as exc:  # Core failures are surfaced as job state, never an unstructured task crash.
+        LOGGER.exception("Pipeline failed for job %s: %s", job_id, exc)
         jobs.update(job_id, status="FAILED", error={"code": "PIPELINE_FAILED", "message": str(exc)})
 
 

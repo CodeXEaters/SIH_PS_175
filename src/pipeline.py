@@ -86,6 +86,7 @@ def process_path(
     tile_size: int | None = None,
     overlap: float = 0.25,
     reference_elevation: np.ndarray | None = None,
+    transform: Affine | None = None,
 ) -> ProcessingResult:
     """Load an RGB image or CRS-aware GeoTIFF and process it."""
     from pathlib import Path
@@ -99,7 +100,7 @@ def process_path(
             loaded.data[..., :3],
             model,
             calibration,
-            loaded.metadata.transform,
+            loaded.metadata.transform if transform is None else transform,
             vertical_exaggeration,
             tile_size,
             overlap,
@@ -120,9 +121,10 @@ def process_path(
 
         elevation = load_hdf5_elevation(input_path)
         if elevation is not None:
+            effective_transform = transform if transform is not None else Affine.identity()
             heightfield = create_heightfield(
                 elevation,
-                transform or Affine.identity(),
+                effective_transform,
                 vertical_exaggeration,
             )
             return ProcessingResult(
@@ -138,6 +140,7 @@ def process_path(
             loaded_hdf5.data,
             model,
             calibration,
+            transform=transform,
             vertical_exaggeration=vertical_exaggeration,
             tile_size=tile_size,
             overlap=overlap,
@@ -149,6 +152,7 @@ def process_path(
         loaded_image.data,
         model,
         calibration,
+        transform=transform,
         vertical_exaggeration=vertical_exaggeration,
         tile_size=tile_size,
         overlap=overlap,

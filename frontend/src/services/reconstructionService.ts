@@ -393,17 +393,32 @@ export const reconstructionService = {
       jobId: accepted.job_id,
       status: "UPLOADED" as Stage,
     };
-    onStage("UPLOADED", 0, currentProject);
+    onStage("UPLOADED", 15, currentProject);
+
+    const STAGE_PROGRESS_MAP: Record<string, number> = {
+      UPLOADED: 15,
+      QUEUED: 20,
+      PROCESSING: 30,
+      DEPTH_ESTIMATION: 50,
+      DEPTH_INFERENCE: 50,
+      CALIBRATION: 65,
+      DSM_GENERATION: 75,
+      VALIDATION: 82,
+      MESH_GENERATION: 90,
+      COMPLETED: 100,
+    };
+
     const completed = await waitForJob(accepted.job_id, (job) => {
       const rawStatus = job.status;
       const status = rawStatus as Stage;
+      const pct = rawStatus === "COMPLETED" ? 100 : (STAGE_PROGRESS_MAP[rawStatus] ?? 50);
       const next = {
         ...currentProject,
         status:
           rawStatus === "COMPLETED" ? ("READY_RELATIVE" as Stage) : status,
       };
       currentProject = next;
-      onStage(status, rawStatus === "COMPLETED" ? 100 : 50, next);
+      onStage(status, pct, next);
     });
     if (completed.status === "FAILED")
       throw new Error(completed.error?.message || "Processing failed.");

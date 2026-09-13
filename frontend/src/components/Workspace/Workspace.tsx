@@ -71,15 +71,18 @@ export function Workspace({ goHome }: { goHome: () => void }) {
   const [wireframeMode, setWireframeMode] = useState(false);
   const [resetCameraTrigger, setResetCameraTrigger] = useState(0);
   const [showInspector, setShowInspector] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const input = useRef<HTMLInputElement>(null);
 
+  const isFailed = project.status === "FAILED";
   const isReady =
     project.status === "READY_METRIC" || project.status === "READY_RELATIVE";
-  const running = project.status !== "EMPTY" && !isReady;
+  const running = project.status !== "EMPTY" && !isReady && !isFailed;
 
   const runReconstruction = async (targetProj: Project, file?: File) => {
     if (!file && !targetProj.source.url) return;
+    setErrorMessage(null);
     setProject((p) => ({ ...p, status: "INSPECTING" }));
     setProgress(5);
     try {
@@ -93,7 +96,10 @@ export function Workspace({ goHome }: { goHome: () => void }) {
       );
     } catch (err: any) {
       console.error("Reconstruction failed:", err);
+      const msg = err?.message || "Reconstruction failed.";
+      setErrorMessage(msg);
       setProject((p) => ({ ...p, status: "FAILED" }));
+      setProgress(0);
     }
   };
 
@@ -103,6 +109,7 @@ export function Workspace({ goHome }: { goHome: () => void }) {
 
   const handleFileUpload = (file?: File) => {
     if (!file) return;
+    setErrorMessage(null);
     const newProj = reconstructionService.createProject(file);
     setInputFile(file);
     setProject(newProj);
@@ -226,17 +233,19 @@ export function Workspace({ goHome }: { goHome: () => void }) {
         {/* System Pipeline Status */}
         <div className="run-status" aria-live="polite">
           <i
-            className={running ? "pulse" : isReady ? "ready" : ""}
+            className={running ? "pulse" : isReady ? "ready" : isFailed ? "failed" : ""}
             aria-hidden="true"
           />
           <span>
             {running
               ? `PROCESSING · ${progress}%`
-              : isReady
-                ? project.reconstructionMode === "metric"
-                  ? "METRIC TERRAIN READY"
-                  : "RELATIVE TERRAIN READY"
-                : "STANDBY · READY TO PROCESS"}
+              : isFailed
+                ? `FAILED · ${errorMessage || "PROCESSING ERROR"}`
+                : isReady
+                  ? project.reconstructionMode === "metric"
+                    ? "METRIC TERRAIN READY"
+                    : "RELATIVE TERRAIN READY"
+                  : "STANDBY · READY TO PROCESS"}
           </span>
         </div>
 
@@ -366,6 +375,30 @@ export function Workspace({ goHome }: { goHome: () => void }) {
               <i style={{ width: `${progress}%` }} />
             </span>
             <small>{currentStageDetail}</small>
+          </div>
+        )}
+
+        {/* Processing Failure Banner */}
+        {isFailed && errorMessage && (
+          <div className="pipeline-error-banner animate-fade-in" role="alert">
+            <div className="error-content">
+              <strong>Processing Failed</strong>
+              <p>{errorMessage}</p>
+            </div>
+            <div className="error-actions">
+              <button
+                onClick={() => runReconstruction(project, inputFile)}
+                className="retry-btn"
+              >
+                Retry
+              </button>
+              <button
+                onClick={() => setErrorMessage(null)}
+                className="dismiss-btn"
+              >
+                Dismiss
+              </button>
+            </div>
           </div>
         )}
 

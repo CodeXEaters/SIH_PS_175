@@ -77,3 +77,16 @@ def test_process_path_preserves_geotiff_metadata(tmp_path) -> None:
     assert result.raster_metadata is not None
     assert result.raster_metadata.crs.to_epsg() == 32644
     assert result.raster_metadata.transform == transform
+
+
+def test_process_path_handles_hdf5_elevation(tmp_path) -> None:
+    import h5py
+
+    source = tmp_path / "test_AGL.h5"
+    with h5py.File(source, "w") as f:
+        f.create_dataset("image", data=np.full((8, 8), 12.5, dtype=np.float32))
+
+    result = process_path(str(source), FakeDepthModel())
+    assert result.dsm.shape == (8, 8)
+    assert len(result.mesh.vertices) == 64
+    assert len(result.mesh.triangles) > 0
