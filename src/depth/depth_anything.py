@@ -66,7 +66,11 @@ class TorchScriptDepthModel:
 		"""Load a TorchScript checkpoint from a local file."""
 		checkpoint = Path(path)
 		if not checkpoint.is_file():
-			raise FileNotFoundError(f"depth checkpoint does not exist: {checkpoint}")
+			raise FileNotFoundError(
+				f"depth checkpoint does not exist: {checkpoint}. "
+				"Please download or export 'depth_anything_v2_vits.pt' into 'models/checkpoints/' "
+				"or set the DEPTH_CHECKPOINT environment variable to valid TorchScript weights."
+			)
 		try:
 			import torch
 		except ImportError as error:

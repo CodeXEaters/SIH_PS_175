@@ -5,7 +5,7 @@ from fastapi import APIRouter
 from fastapi.responses import FileResponse
 
 from api.schemas.responses import VisualizationResponse
-from api.services import APIError, PROJECT_ROOT, jobs, response_job
+from api.services import APIError, PROJECT_ROOT, STORAGE_ROOT, jobs, response_job
 
 router = APIRouter(tags=["visualization"])
 
@@ -20,7 +20,7 @@ def _asset(job_id: str, key: str) -> Path:
     if not value:
         raise APIError(404, "VISUALIZATION_NOT_FOUND", f"No {key} result is available for job '{job_id}'.")
     path = Path(value).resolve()
-    if not path.is_file() or PROJECT_ROOT not in path.parents:
+    if not path.is_file() or (PROJECT_ROOT not in path.parents and STORAGE_ROOT not in path.parents):
         raise APIError(404, "VISUALIZATION_NOT_FOUND", f"No {key} result is available for job '{job_id}'.")
     return path
 

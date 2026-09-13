@@ -3,6 +3,7 @@ import json
 import numpy as np
 from PIL import Image
 
+from scripts.build_mesh import main as build_mesh_main
 from scripts.calibrate_dsm import main as calibrate_main
 from scripts.evaluate import main as evaluate_main
 from scripts.run_inference import main as inference_main
@@ -43,3 +44,16 @@ def test_inference_script_accepts_rgb_image(tmp_path, monkeypatch) -> None:
 
     assert inference_main() == 0
     assert np.array_equal(np.load(output), np.full((2, 2), 7, dtype=np.float32))
+
+
+def test_build_mesh_script_exports_glb(tmp_path, monkeypatch) -> None:
+    dsm = tmp_path / "dsm.npy"
+    output = tmp_path / "terrain.glb"
+    np.save(dsm, np.ones((4, 4), dtype=np.float32))
+    monkeypatch.setattr(
+        "sys.argv",
+        ["build_mesh", str(dsm), "--output", str(output)],
+    )
+
+    assert build_mesh_main() == 0
+    assert output.is_file()
