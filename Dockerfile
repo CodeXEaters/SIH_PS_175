@@ -31,7 +31,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DEPTH_CHECKPOINT=/app/models/checkpoints/depth_anything_v2_vits.pt \
     API_STORAGE_DIR=/app/output/api_jobs \
     FRONTEND_DIST_DIR=/app/frontend/dist \
-    LOW_MEMORY_MODE=1
+    LOW_MEMORY_MODE=1 \
+    MAX_IMAGE_DIM=256 \
+    TORCH_NUM_THREADS=1 \
+    MALLOC_ARENA_MAX=1
 
 WORKDIR /app
 

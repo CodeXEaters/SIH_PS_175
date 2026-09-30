@@ -45,6 +45,20 @@ ALLOWED_CONTENT_TYPES = frozenset(
 MAX_UPLOAD_BYTES = int(os.getenv("API_MAX_UPLOAD_BYTES", str(50 * 1024 * 1024)))
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 STORAGE_ROOT = Path(os.getenv("API_STORAGE_DIR", str(PROJECT_ROOT / "output" / "api_jobs"))).resolve()
+FREE_TIER_MODE = os.getenv("FREE_TIER_MODE", "0").lower() in {"1", "true", "yes"}
+FREE_TIER_MAX_INPUT_PIXELS = int(os.getenv("FREE_TIER_MAX_INPUT_PIXELS", "1048576"))
+# The checked-in TorchScript export has fixed 518x518 positional embeddings.
+# Smaller source images are still used for the DSM/mesh, then the adapter feeds
+# the supported size to the model.
+FREE_TIER_MODEL_INPUT = int(os.getenv("FREE_TIER_MODEL_INPUT", "518"))
+
+# A free Render instance has 512 MB RAM.  Keep one model and one pipeline in
+# memory at a time so two browser requests cannot each allocate Torch tensors,
+# raster arrays, and terrain meshes simultaneously.
+INFERENCE_LOCK = asyncio.Lock()
+MODEL_LOCK = threading.Lock()
+_CACHED_MODEL: Any | None = None
+_CACHED_MODEL_KEY: tuple[str, str, int] | None = None
 
 
 class APIError(Exception):
@@ -208,6 +222,12 @@ def validate_upload(filename: str | None, content_type: str | None, data: bytes)
         raise APIError(400, "INVALID_CONTENT_TYPE", "The uploaded file does not have an accepted image content type.")
     
     suffix = Path(name).suffix.lower()
+    if FREE_TIER_MODE and suffix in {".tif", ".tiff", ".geotiff", ".h5", ".hdf5"}:
+        raise APIError(
+            400,
+            "FREE_TIER_UNSUPPORTED_INPUT",
+            "The free demo accepts PNG and JPEG images only. GeoTIFF and HDF5 inputs need more memory than a free Render instance provides.",
+        )
     if suffix in {".h5", ".hdf5"}:
         try:
             import io
@@ -220,7 +240,15 @@ def validate_upload(filename: str | None, content_type: str | None, data: bytes)
     else:
         try:
             with Image.open(__import__("io").BytesIO(data)) as image:
+                if FREE_TIER_MODE and image.width * image.height > FREE_TIER_MAX_INPUT_PIXELS:
+                    raise APIError(
+                        413,
+                        "IMAGE_DIMENSIONS_TOO_LARGE",
+                        f"The free demo accepts images up to {FREE_TIER_MAX_INPUT_PIXELS:,} pixels. Resize the image and try again.",
+                    )
                 image.verify()
+        except APIError:
+            raise
         except (UnidentifiedImageError, OSError, ValueError) as exc:
             raise APIError(400, "CORRUPTED_IMAGE", "The uploaded image is corrupted or not a supported image.") from exc
     return name
@@ -324,6 +352,24 @@ def queue_job(job_id: str) -> Job:
     return jobs.update(job_id, status="QUEUED")
 
 
+def get_depth_model(name: str, checkpoint: str, input_size: int | tuple[int, int] | list[int] | None):
+    """Load the depth model once per worker instead of once per submitted job."""
+    global _CACHED_MODEL, _CACHED_MODEL_KEY
+    effective_input = FREE_TIER_MODEL_INPUT if FREE_TIER_MODE else input_size
+    if isinstance(effective_input, list):
+        effective_input = tuple(effective_input)
+    cache_size = effective_input if isinstance(effective_input, int) else (
+        int(effective_input[0]) if effective_input is not None else 0
+    )
+    key = (name, checkpoint, cache_size)
+    with MODEL_LOCK:
+        if _CACHED_MODEL is None or _CACHED_MODEL_KEY != key:
+            from src.depth.model_factory import create_depth_model
+            _CACHED_MODEL = create_depth_model(name, checkpoint=checkpoint, input_size=effective_input)
+            _CACHED_MODEL_KEY = key
+        return _CACHED_MODEL
+
+
 def _callable_from_src(candidates: list[tuple[str, str]]) -> Callable[..., Any] | None:
     for module_name, attribute in candidates:
         try:
@@ -347,13 +393,18 @@ async def _invoke(function: Callable[..., Any], **kwargs: Any) -> Any:
 
 
 async def run_pipeline(job_id: str) -> None:
+    """Serialize inference work so free-tier memory use has one predictable peak."""
+    async with INFERENCE_LOCK:
+        await _run_pipeline(job_id)
+
+
+async def _run_pipeline(job_id: str) -> None:
     """Run the configured core pipeline and retain downloadable products."""
     job = jobs.get(job_id)
     jobs.update(job_id, status="PROCESSING")
     try:
         from src.config import load_config
         from src.calibration.scale_shift import calibrate_scale_shift
-        from src.depth.model_factory import create_depth_model
         from src.depth.postprocess import normalize_relative_depth
         from src.dsm.generate import generate_metric_dsm
         from src.mesh.heightfield import create_heightfield
@@ -365,7 +416,12 @@ async def run_pipeline(job_id: str) -> None:
         config = load_config(PROJECT_ROOT / "configs" / "default.yaml")
         model_config = config["model"]
         checkpoint = os.getenv("DEPTH_CHECKPOINT", str(PROJECT_ROOT / "models" / "checkpoints" / "depth_anything_v2_vits.pt"))
-        model = create_depth_model(model_config["name"], checkpoint=checkpoint, input_size=model_config.get("input_size"))
+        model = await asyncio.to_thread(
+            get_depth_model,
+            model_config["name"],
+            checkpoint,
+            model_config.get("input_size"),
+        )
         input_path = Path(job.results["input_path"])
         low_memory = os.getenv("LOW_MEMORY_MODE", "1").lower() in {"1", "true", "yes"}
         tile_size = None if low_memory else model_config.get("tile_size")
