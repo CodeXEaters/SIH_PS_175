@@ -30,7 +30,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     HOST=0.0.0.0 \
     DEPTH_CHECKPOINT=/app/models/checkpoints/depth_anything_v2_vits.pt \
     API_STORAGE_DIR=/app/output/api_jobs \
-    FRONTEND_DIST_DIR=/app/frontend/dist
+    FRONTEND_DIST_DIR=/app/frontend/dist \
+    LOW_MEMORY_MODE=1
 
 WORKDIR /app
 

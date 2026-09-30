@@ -367,9 +367,11 @@ async def run_pipeline(job_id: str) -> None:
         checkpoint = os.getenv("DEPTH_CHECKPOINT", str(PROJECT_ROOT / "models" / "checkpoints" / "depth_anything_v2_vits.pt"))
         model = create_depth_model(model_config["name"], checkpoint=checkpoint, input_size=model_config.get("input_size"))
         input_path = Path(job.results["input_path"])
-        tile_size = model_config.get("tile_size")
+        low_memory = os.getenv("LOW_MEMORY_MODE", "1").lower() in {"1", "true", "yes"}
+        tile_size = None if low_memory else model_config.get("tile_size")
         if input_path.suffix.lower() in {".h5", ".hdf5"}:
             tile_size = None
+        auto_tile = False if low_memory else (input_path.suffix.lower() not in {".h5", ".hdf5"})
         jobs.update(job_id, status="DEPTH_ESTIMATION")
         result = await asyncio.to_thread(
             process_path,
@@ -378,7 +380,7 @@ async def run_pipeline(job_id: str) -> None:
             vertical_exaggeration=float(config["mesh"].get("vertical_exaggeration", 1.0)),
             tile_size=tile_size,
             overlap=float(model_config.get("overlap", 0.25)),
-            auto_tile=input_path.suffix.lower() not in {".h5", ".hdf5"},
+            auto_tile=auto_tile,
         )
 
         ref_path_str = job.results.get("reference_path")
