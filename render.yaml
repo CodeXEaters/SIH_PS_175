@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: depthwizard
+    env: docker
+    dockerfilePath: Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: API_MAX_UPLOAD_BYTES
+        value: 52428800
+      - key: API_CORS_ORIGINS
+        value: "*"
+      - key: DEPTH_CHECKPOINT
+        value: /app/models/checkpoints/depth_anything_v2_vits.pt
+      - key: DEPTH_MODEL_URL
+        sync: false

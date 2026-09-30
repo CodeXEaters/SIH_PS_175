@@ -40,11 +40,12 @@ def process_image(
     tile_size: int | None = None,
     overlap: float = 0.25,
     reference_elevation: np.ndarray | None = None,
+    auto_tile: bool = True,
 ) -> ProcessingResult:
     """Run depth inference and generate a relative or metric terrain product."""
     rgb_image = np.asarray(image)
     effective_tile_size = tile_size
-    if effective_tile_size is None and rgb_image.ndim == 3:
+    if auto_tile and effective_tile_size is None and rgb_image.ndim == 3:
         height, width = rgb_image.shape[:2]
         if height > DEFAULT_TILE_SIZE or width > DEFAULT_TILE_SIZE:
             effective_tile_size = DEFAULT_TILE_SIZE
@@ -87,6 +88,7 @@ def process_path(
     overlap: float = 0.25,
     reference_elevation: np.ndarray | None = None,
     transform: Affine | None = None,
+    auto_tile: bool = True,
 ) -> ProcessingResult:
     """Load an RGB image or CRS-aware GeoTIFF and process it."""
     from pathlib import Path
@@ -105,6 +107,7 @@ def process_path(
             tile_size,
             overlap,
             reference_elevation,
+            auto_tile,
         )
         return ProcessingResult(
             relative_depth=result.relative_depth,
@@ -145,6 +148,7 @@ def process_path(
             tile_size=tile_size,
             overlap=overlap,
             reference_elevation=reference_elevation,
+            auto_tile=auto_tile,
         )
 
     loaded_image = load_image(input_path)
@@ -157,4 +161,5 @@ def process_path(
         tile_size=tile_size,
         overlap=overlap,
         reference_elevation=reference_elevation,
+        auto_tile=auto_tile,
     )

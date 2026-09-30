@@ -1,0 +1,28 @@
+services:
+  depthwizard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: depthwizard:latest
+    container_name: depthwizard-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - API_MAX_UPLOAD_BYTES=52428800
+      - API_CORS_ORIGINS=*
+      - DEPTH_CHECKPOINT=/app/models/checkpoints/depth_anything_v2_vits.pt
+      - DEPTH_MODEL_URL=${DEPTH_MODEL_URL:-}
+    volumes:
+      # Persist job artifacts and uploaded files
+      - ./output/api_jobs:/app/output/api_jobs
+      # Mount local model checkpoints so they persist across image rebuilds
+      - ./models/checkpoints:/app/models/checkpoints
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

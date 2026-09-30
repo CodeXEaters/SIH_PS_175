@@ -13,6 +13,7 @@ import logging
 import os
 import re
 import threading
+from dataclasses import replace
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -351,22 +352,33 @@ async def run_pipeline(job_id: str) -> None:
     jobs.update(job_id, status="PROCESSING")
     try:
         from src.config import load_config
+        from src.calibration.scale_shift import calibrate_scale_shift
         from src.depth.model_factory import create_depth_model
+        from src.depth.postprocess import normalize_relative_depth
+        from src.dsm.generate import generate_metric_dsm
+        from src.mesh.heightfield import create_heightfield
+        from src.mesh.mesh_generator import generate_terrain_mesh
         from src.pipeline import process_path
         from src.result_export import export_processing_result
+        from rasterio.transform import Affine
 
         config = load_config(PROJECT_ROOT / "configs" / "default.yaml")
         model_config = config["model"]
         checkpoint = os.getenv("DEPTH_CHECKPOINT", str(PROJECT_ROOT / "models" / "checkpoints" / "depth_anything_v2_vits.pt"))
         model = create_depth_model(model_config["name"], checkpoint=checkpoint, input_size=model_config.get("input_size"))
+        input_path = Path(job.results["input_path"])
+        tile_size = model_config.get("tile_size")
+        if input_path.suffix.lower() in {".h5", ".hdf5"}:
+            tile_size = None
         jobs.update(job_id, status="DEPTH_ESTIMATION")
         result = await asyncio.to_thread(
             process_path,
             job.results["input_path"],
             model,
             vertical_exaggeration=float(config["mesh"].get("vertical_exaggeration", 1.0)),
-            tile_size=model_config.get("tile_size"),
+            tile_size=tile_size,
             overlap=float(model_config.get("overlap", 0.25)),
+            auto_tile=input_path.suffix.lower() not in {".h5", ".hdf5"},
         )
 
         ref_path_str = job.results.get("reference_path")
@@ -378,45 +390,71 @@ async def run_pipeline(job_id: str) -> None:
             "metrics": None,
             "reference": None,
         }
+        calibration_data: dict[str, Any] | None = None
 
         if ref_path is not None and ref_path.is_file():
-            try:
-                jobs.update(job_id, status="VALIDATION")
-                ref_data, ref_meta = await asyncio.to_thread(load_reference_elevation, ref_path)
-                if ref_data is not None:
-                    from src.validation.alignment import align_elevation_reference
-                    from src.validation.metrics import calculate_metrics
+            jobs.update(job_id, status="CALIBRATION")
+            ref_data, ref_meta = await asyncio.to_thread(load_reference_elevation, ref_path)
+            if ref_data is None:
+                raise ValueError(f"Reference elevation could not be loaded: {ref_path.name}")
 
-                    aligned_ref, mask = await asyncio.to_thread(
-                        align_elevation_reference,
-                        result.dsm,
-                        ref_data,
-                        pred_metadata=result.raster_metadata,
-                        ref_metadata=ref_meta,
-                    )
-                    metrics_obj = await asyncio.to_thread(calculate_metrics, result.dsm, aligned_ref, mask)
-                    metrics_dict = metrics_obj.to_dict()
-                    validation_data = {
-                        "available": True,
-                        "metrics": metrics_dict,
-                        "reference": {
-                            "source": ref_path.name,
-                            "shape": list(ref_data.shape),
-                            "valid_pixels": int(metrics_obj.valid_pixels),
-                        },
-                        "artifacts": {
-                            "report_json": f"/validation/{job_id}/report.json",
-                            "metrics_csv": f"/validation/{job_id}/metrics.csv",
-                        },
-                    }
-            except Exception as val_exc:
-                LOGGER.warning("Validation calculation failed for job %s: %s", job_id, val_exc)
-                validation_data = {
-                    "available": False,
-                    "reason": f"Validation computation error: {val_exc}",
-                    "metrics": None,
-                    "reference": None,
-                }
+            from src.validation.alignment import align_elevation_reference
+            from src.validation.metrics import calculate_metrics
+
+            normalized_depth = await asyncio.to_thread(normalize_relative_depth, result.relative_depth)
+            aligned_ref, mask = await asyncio.to_thread(
+                align_elevation_reference,
+                normalized_depth,
+                ref_data,
+                pred_metadata=result.raster_metadata,
+                ref_metadata=ref_meta,
+            )
+            calibration = await asyncio.to_thread(
+                calibrate_scale_shift,
+                normalized_depth,
+                aligned_ref,
+                mask,
+                huber_delta=float(config["calibration"].get("huber_delta", 1.345)),
+            )
+            transform = result.raster_metadata.transform if result.raster_metadata is not None else Affine.identity()
+            calibrated_dsm = generate_metric_dsm(normalized_depth, calibration)
+            calibrated_heightfield = create_heightfield(
+                calibrated_dsm,
+                transform,
+                float(config["mesh"].get("vertical_exaggeration", 1.0)),
+            )
+            result = replace(
+                result,
+                relative_depth=normalized_depth,
+                dsm=calibrated_dsm,
+                is_metric=True,
+                heightfield=calibrated_heightfield,
+                mesh=generate_terrain_mesh(calibrated_heightfield),
+            )
+            calibration_data = {
+                "method": "huber_scale_shift",
+                "scale": calibration.scale,
+                "shift": calibration.shift,
+                "residual_rmse": calibration.residual_rmse,
+                "inlier_count": calibration.inlier_count,
+                "sample_count": calibration.sample_count,
+            }
+            metrics_obj = await asyncio.to_thread(calculate_metrics, result.dsm, aligned_ref, mask)
+            metrics_dict = metrics_obj.to_dict()
+            validation_data = {
+                "available": True,
+                "metrics": metrics_dict,
+                "reference": {
+                    "source": ref_path.name,
+                    "shape": list(ref_data.shape),
+                    "valid_pixels": int(metrics_obj.valid_pixels),
+                },
+                "calibration": calibration_data,
+                "artifacts": {
+                    "report_json": f"/validation/{job_id}/report.json",
+                    "metrics_csv": f"/validation/{job_id}/metrics.csv",
+                },
+            }
 
         jobs.update(job_id, status="MESH_GENERATION")
         # Load input image to embed as photo-texture on the 3D GLB mesh
@@ -446,6 +484,8 @@ async def run_pipeline(job_id: str) -> None:
             "elevation_statistics": elev_stats,
             "valid_pixels": int(finite.size),
         }
+        if calibration_data is not None:
+            metadata["calibration"] = calibration_data
         if result.raster_metadata is not None:
             metadata.update({
                 "crs": result.raster_metadata.crs.to_string(),

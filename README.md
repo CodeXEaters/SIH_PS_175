@@ -159,6 +159,24 @@ Open [http://localhost:5173](http://localhost:5173) in your browser to view the 
 
 ---
 
+### Step 8: Production Deployment with Docker
+
+You can run the entire unified stack (Frontend + Backend + Model Inference) using Docker:
+
+```bash
+# 1. Build and start with Docker Compose
+docker compose up -d --build
+
+# 2. View running logs
+docker compose logs -f
+```
+
+The application is immediately available at [http://localhost:8000](http://localhost:8000).
+
+For cloud deployment guides (Render, Railway, Google Cloud Run, AWS EC2, VPS), see [docs/deployment.md](docs/deployment.md).
+
+---
+
 ## CLI Script Usage
 
 ### End-to-End Image Processing
