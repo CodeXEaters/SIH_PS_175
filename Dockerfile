@@ -31,10 +31,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install minimal OS dependencies for geospatial and network healthchecks
+# Install minimal OS dependencies for geospatial, rendering, and network healthchecks
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
+    libexpat1 \
+    libgomp1 \
+    libgl1 \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install lightweight PyTorch CPU build (~700MB vs ~3.5GB with CUDA)
