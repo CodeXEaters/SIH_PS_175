@@ -46,6 +46,11 @@ class TorchScriptDepthModel:
 			raise RuntimeError("TorchScript inference requires the torch package") from error
 		self._torch = torch
 		self._device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
+		if self._device.type == "cpu":
+			try:
+				torch.set_num_threads(1)
+			except Exception:
+				pass
 		self._model = model.to(self._device).eval()
 		self._mean = torch.tensor(mean, dtype=torch.float32, device=self._device).view(1, 3, 1, 1)
 		self._standard_deviation = torch.tensor(standard_deviation, dtype=torch.float32, device=self._device).view(1, 3, 1, 1)

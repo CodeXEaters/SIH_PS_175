@@ -529,11 +529,15 @@ async def run_calibration(job_id: str, method: str, parameters: dict[str, Any]) 
 
 
 def schedule(coro: Any, background_tasks: Any | None = None) -> None:
-    """Use FastAPI's background runner when provided, otherwise create a task."""
-    if background_tasks is not None:
-        background_tasks.add_task(asyncio.run, coro)
-    else:
-        asyncio.create_task(coro)
+    """Use active asyncio loop when available, otherwise fallback to background tasks."""
+    try:
+        loop = asyncio.get_running_loop()
+        loop.create_task(coro)
+    except RuntimeError:
+        if background_tasks is not None:
+            background_tasks.add_task(asyncio.run, coro)
+        else:
+            asyncio.run(coro)
 
 
 def response_job(job: Job) -> dict[str, Any]:

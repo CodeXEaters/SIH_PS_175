@@ -69,10 +69,18 @@ export async function waitForJob(
   jobId: string,
   onUpdate: (job: ApiJob) => void,
 ): Promise<ApiJob> {
+  let consecutiveErrors = 0;
   for (;;) {
-    const job = await getJob(jobId);
-    onUpdate(job);
-    if (job.status === "COMPLETED" || job.status === "FAILED") return job;
-    await new Promise((resolve) => window.setTimeout(resolve, 500));
+    try {
+      const job = await getJob(jobId);
+      consecutiveErrors = 0;
+      onUpdate(job);
+      if (job.status === "COMPLETED" || job.status === "FAILED") return job;
+    } catch (err) {
+      consecutiveErrors++;
+      // Allow up to 8 transient errors (e.g. temporary CPU saturation 502s) before failing
+      if (consecutiveErrors >= 8) throw err;
+    }
+    await new Promise((resolve) => window.setTimeout(resolve, 1500));
   }
 }

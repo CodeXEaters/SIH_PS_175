@@ -1,6 +1,7 @@
 """Loading helpers for ordinary RGB image inputs."""
 
 import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -34,6 +35,10 @@ def load_image(path: str | Path) -> LoadedImage:
 
 	try:
 		with Image.open(image_path) as image:
+			max_dim = int(os.getenv("MAX_IMAGE_DIM", "1024"))
+			if max_dim > 0 and (image.width > max_dim or image.height > max_dim):
+				image.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
+				LOGGER.info("Resized %s to %s for memory efficiency", image_path.name, image.size)
 			rgb_image = image.convert("RGB")
 			data = np.asarray(rgb_image, dtype=np.uint8).copy()
 	except UnidentifiedImageError as error:

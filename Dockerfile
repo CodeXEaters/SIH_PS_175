@@ -23,6 +23,9 @@ FROM python:3.11-slim AS production
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    OMP_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1 \
+    OPENBLAS_NUM_THREADS=1 \
     PORT=8000 \
     HOST=0.0.0.0 \
     DEPTH_CHECKPOINT=/app/models/checkpoints/depth_anything_v2_vits.pt \
